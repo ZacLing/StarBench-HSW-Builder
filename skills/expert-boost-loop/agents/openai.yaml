@@ -1,0 +1,4 @@
+interface:
+  display_name: "Expert Boost Loop"
+  short_description: "Iterative expert review workflow"
+  default_prompt: "Use $expert-boost-loop to create a complete output package from my prompt and materials, then iterate from my strengths and weaknesses."

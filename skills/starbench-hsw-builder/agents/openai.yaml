@@ -1,0 +1,4 @@
+interface:
+  display_name: "StarBench HSW Builder"
+  short_description: "Onboard experts into HSW task building"
+  default_prompt: "Use $starbench-hsw-builder to introduce the StarBench-HSW project and guide me from my task idea or role background into the right next step."
