@@ -149,6 +149,7 @@ Next action:
    - The task prompt or rough scenario.
    - Any materials or file paths.
    - What kind of output package the agent should produce.
+   - Where to save the task package; strongly recommend that the user choose a stable location so the trace is easy to find later.
    - Whether the task should allow internet search, code execution, subagents, or other tools.
 3. Switch into `expert-boost-loop` and follow its storage and recording rules.
 

@@ -1,6 +1,6 @@
 ---
 name: expert-boost-loop
-description: StarBoost-style expert-in-the-loop iteration for Codex conversations. Use when a user provides an initial task prompt and materials, wants Codex to create a complete output package, then repeatedly records human strengths and weaknesses verbatim and regenerates full improved packages using only the weaknesses as revision targets with an auditable local history.
+description: StarBoost-style expert-in-the-loop iteration for Codex conversations with an explicit user-chosen task package location. Use when a user provides an initial task prompt and materials, wants Codex to create a complete output package, then repeatedly records human strengths and weaknesses verbatim and regenerates full improved packages using only the weaknesses as revision targets with an auditable local history.
 ---
 
 # Expert Boost Loop
@@ -9,6 +9,7 @@ Use this skill to run a lightweight StarBoost-style improvement harness inside a
 
 ## Core Rules
 
+- Decide the task package location before initializing a run.
 - Save the user's original task prompt exactly before acting on it.
 - Save every review-like user message exactly before interpreting it.
 - Produce complete output packages for every round, never only patches.
@@ -19,13 +20,26 @@ Use this skill to run a lightweight StarBoost-style improvement harness inside a
 
 ## Storage
 
-Default run root:
+The task package is the run root directory that contains `task.json`, `original/`, `rounds/`, `reviews/`, and `export/`.
+
+Strongly recommend that the user choose this location before the run starts so they can find the package later. The user may provide either:
+
+- An exact task package directory, such as `/path/to/my-hsw-task-package`.
+- A parent directory plus a task name; create `<parent>/<task_slug>/`.
+
+If the user does not provide a location, ask once before initialization:
+
+```text
+Where should I save this task package? I strongly recommend choosing a stable folder now so the trace is easy to find later. You can give me an exact directory, or say "you decide" and I will create one in the current workspace.
+```
+
+If the user still asks Codex to decide, use the current workspace default:
 
 ```text
 .codex-starboost/<task_slug>/
 ```
 
-Use the current workspace unless the user requests another location. Keep this structure:
+Keep this structure inside the chosen task package:
 
 ```text
 task.json
@@ -47,30 +61,48 @@ export/
 
 Use `scripts/boost_record.py` for deterministic initialization, review recording, and manifests.
 
+When the user provides an exact package directory, initialize with:
+
+```bash
+python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py init --run <task_package_dir> --prompt-file <verbatim_prompt_file> --material <path> ...
+```
+
+When using a parent directory plus slug, initialize with:
+
+```bash
+python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py init --base <parent_dir> --slug <task_slug> --prompt-file <verbatim_prompt_file> --material <path> ...
+```
+
 ## Starting A Task
 
 When the user gives the initial task and materials:
 
-1. Choose a short filesystem-safe `task_slug`.
-2. Save the initial user prompt verbatim. Prefer:
+1. Resolve the task package location:
+   - If the user already gave an exact location, use it.
+   - If the user gave only a parent folder or project folder, choose a short filesystem-safe `task_slug` and create the package under that parent.
+   - If no location was provided, ask once using the Storage prompt above.
+   - If the user says Codex should decide, choose `.codex-starboost/<task_slug>/` in the current workspace.
+2. Choose a short filesystem-safe `task_slug` when needed.
+3. Save the initial user prompt verbatim. Prefer one of:
 
 ```bash
-python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py init --slug <task_slug> --prompt-file <verbatim_prompt_file> --material <path> ...
+python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py init --run <task_package_dir> --prompt-file <verbatim_prompt_file> --material <path> ...
+python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py init --base <parent_dir> --slug <task_slug> --prompt-file <verbatim_prompt_file> --material <path> ...
 ```
 
 If the prompt is only in chat, create a temporary file containing the exact text first, then run `init`.
 
-3. Copy or reference user-provided material paths under `original/materials/` when possible.
-4. Create `rounds/v000_cold_start/prompt.md` with the cold-start prompt below.
-5. Produce the full deliverable package under `rounds/v000_cold_start/outputs/`.
-6. Write `rounds/v000_cold_start/final.md` with a concise completion note and output paths.
-7. Run:
+4. Copy or reference user-provided material paths under `original/materials/` when possible.
+5. Create `rounds/v000_cold_start/prompt.md` with the cold-start prompt below.
+6. Produce the full deliverable package under `rounds/v000_cold_start/outputs/`.
+7. Write `rounds/v000_cold_start/final.md` with a concise completion note and output paths.
+8. Run:
 
 ```bash
-python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py manifest --run .codex-starboost/<task_slug> --round v000_cold_start --stage cold_start
+python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py manifest --run <task_package_dir> --round v000_cold_start --stage cold_start
 ```
 
-8. Ask the user for strengths and weaknesses of the latest output.
+9. Ask the user for strengths and weaknesses of the latest output.
 
 ## Cold-Start Prompt
 
@@ -89,7 +121,7 @@ Instructions:
 - Use only the original prompt and provided materials.
 - Produce a complete, polished deliverable package.
 - Save all final deliverables under:
-  .codex-starboost/<task_slug>/rounds/v000_cold_start/outputs/
+  <task_package_dir>/rounds/v000_cold_start/outputs/
 - Do not produce a draft unless the user asked for a draft.
 - Do not mention this harness in the deliverable unless the user asked for process notes.
 ```
@@ -101,7 +133,7 @@ When the user provides strengths, weaknesses, scores, comments, or any review-li
 1. Before interpreting the message, save it verbatim:
 
 ```bash
-python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py record-review --run .codex-starboost/<task_slug> --round-under-review <latest_round_id> --raw-file <verbatim_review_file>
+python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py record-review --run <task_package_dir> --round-under-review <latest_round_id> --raw-file <verbatim_review_file>
 ```
 
 2. Parse strengths and weaknesses conservatively from the raw text.
@@ -179,8 +211,8 @@ If the user provides no weaknesses, says the output is acceptable, or asks to fi
 
 Keep replies compact:
 
-- After first output: report the output path and ask for strengths and weaknesses.
+- After first output: report the task package path, output path, and ask for strengths and weaknesses.
 - After each review: say the review was recorded, then create the next complete package.
-- After termination: report the final output path and export summary path.
+- After termination: report the task package path, final output path, and export summary path.
 
 Do not claim files were recorded unless they exist.

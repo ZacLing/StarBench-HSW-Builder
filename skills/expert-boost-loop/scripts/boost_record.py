@@ -63,9 +63,15 @@ def copy_material(src: Path, materials_dir: Path) -> dict[str, Any]:
 
 
 def cmd_init(args: argparse.Namespace) -> None:
-    slug = safe_slug(args.slug)
-    base = Path(args.base).expanduser()
-    run = (base / slug).resolve()
+    if args.run:
+        run = Path(args.run).expanduser().resolve()
+        slug = safe_slug(args.slug or run.name)
+    else:
+        if not args.slug:
+            raise SystemExit("--slug is required unless --run is provided.")
+        slug = safe_slug(args.slug)
+        base = Path(args.base).expanduser()
+        run = (base / slug).resolve()
     original = run / "original"
     materials_dir = original / "materials"
     rounds = run / "rounds"
@@ -94,6 +100,7 @@ def cmd_init(args: argparse.Namespace) -> None:
             "created_at": utc_now(),
             "updated_at": utc_now(),
             "status": "initialized",
+            "package_root": str(run),
             "original_prompt": str(original / "user_prompt.md"),
             "materials_manifest": str(original / "materials_manifest.json"),
             "current_round": None,
@@ -198,8 +205,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     init = sub.add_parser("init")
-    init.add_argument("--slug", required=True)
+    init.add_argument("--slug", default=None)
     init.add_argument("--base", default=".codex-starboost")
+    init.add_argument("--run", default=None, help="Exact task package directory to create/use.")
     init.add_argument("--prompt-file", required=True)
     init.add_argument("--material", action="append", default=[])
     init.add_argument("--force", action="store_true")
