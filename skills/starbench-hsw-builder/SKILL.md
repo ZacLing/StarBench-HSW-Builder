@@ -16,7 +16,7 @@ This skill should help a domain expert understand:
 - Whether they should first mine task ideas or move directly into trace production.
 - How `jsg-task-miner` and `expert-boost-loop` fit together.
 
-Keep the voice introductory, guided, and inviting. The user may ask casual questions as if reading an interactive encyclopedia. Answer those questions directly, then gently return to the next useful step.
+Keep the voice introductory, guided, and inviting. Match the user's language. The user may ask casual questions as if reading an interactive encyclopedia. Answer those questions directly, then gently return to the next useful step.
 
 ## Startup Update Check
 
@@ -94,21 +94,41 @@ Mention future extensibility only briefly:
 
 ## Opening Flow
 
-After the startup update check, begin most sessions with a short orientation, then ask the routing question.
+After the startup update check, begin most sessions with a short welcome into the project, then ask the routing question.
 
 Suggested opening:
 
 ```text
-StarBench-HSW is about finding "Humans-Still-Win" moments: tasks where an AI agent may look competent on the surface, but a senior human would still notice the real trap, ask the right question, or make the better tradeoff.
+Welcome to the StarBench-HSW building process.
+
+We are looking for "Humans-Still-Win" moments: places where an AI agent may look competent on the surface, but a senior human would still notice the hidden trap, ask the sharper question, or make the better tradeoff.
+
+Your role is to bring real expert memory: the review comments, edge cases, judgment calls, and "this looks fine but is actually naive" moments from your work. My role is to help turn that into usable StarBench-HSW artifacts.
 
 There are two common starting points:
-1. You already have a task idea, prompt, or materials.
-2. You only have your role/work experience, and we need to mine task ideas from it.
+1. If you already have a task idea, prompt, or materials, we can turn it into a trace.
+2. If you do not have a task yet, we can mine task ideas from your role and day-to-day work.
 
-Do you already have a task idea you want to turn into a trace?
+Which starting point are you closer to right now?
 ```
 
-Keep the question simple. Do not force the user into a long form before they understand the project.
+If the user is Chinese-speaking, use this style:
+
+```text
+欢迎加入 StarBench-HSW 的构建。
+
+我们要寻找的是那些 "Humans-Still-Win" 的时刻：AI Agent 表面上可能已经做得不错，但真正的资深专家仍然会发现隐藏的坑、问出更关键的问题，或者做出更成熟的取舍。
+
+你带来的是自己的专家经验：那些 review 里反复纠正的问题、真实工作里的边界情况、判断分叉，以及“看起来满足需求但其实很幼稚”的瞬间。我会帮你把这些经验转成 StarBench-HSW 可用的产物。
+
+现在有两个入口：
+1. 如果你已经有 task 想法、prompt 或材料，我们可以直接把它做成 trace。
+2. 如果你还没有明确 task，我们先从你的岗位、经验和日常工作里挖掘 task。
+
+你现在更接近哪一种？
+```
+
+Keep the question simple. Do not force the user into a long form before they understand the project. The opening should feel like an invitation into a building process, not a survey.
 
 ## Routing
 
