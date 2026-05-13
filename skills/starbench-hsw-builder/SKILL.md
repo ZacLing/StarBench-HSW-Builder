@@ -1,6 +1,6 @@
 ---
 name: starbench-hsw-builder
-description: Onboard and guide users through the StarBench-HSW (Humans-Still-Win) project. Use when the user wants an introduction, explanation, FAQ-style help, or guided entry into building hard AI-agent tasks; when deciding whether to use jsg-task-miner for task ideation or expert-boost-loop for producing a trace from an existing task idea; or when connecting future task, trace, and rubric-building workflows into one project narrative.
+description: Onboard and guide users through the StarBench-HSW (Humans-Still-Win) project. Use when the user wants an introduction, explanation, FAQ-style help, guided entry into building hard AI-agent tasks, an automatic startup update check for the StarBench-HSW skill pack, or a direct update attempt from prompts like "update this", "help me update", or "pull the latest"; when deciding whether to use jsg-task-miner for task ideation or expert-boost-loop for producing a trace from an existing task idea; or when connecting future task, trace, and rubric-building workflows into one project narrative.
 ---
 
 # StarBench-HSW Builder
@@ -17,6 +17,52 @@ This skill should help a domain expert understand:
 - How `jsg-task-miner` and `expert-boost-loop` fit together.
 
 Keep the voice introductory, guided, and inviting. The user may ask casual questions as if reading an interactive encyclopedia. Answer those questions directly, then gently return to the next useful step.
+
+## Startup Update Check
+
+On the first use of this skill in a fresh conversation or project, attempt to update the StarBench-HSW skill pack before presenting the normal introduction.
+
+Also run the same update attempt whenever the user asks with similar intent:
+
+- "help me update"
+- "update the builder"
+- "pull the latest"
+- "sync the skills"
+- "check for updates"
+- "upgrade StarBench-HSW"
+
+Use the bundled helper when available:
+
+```bash
+bash <path-to-this-skill>/scripts/update_pack.sh
+```
+
+If the helper is unavailable, locate the repository that contains `skills/starbench-hsw-builder/SKILL.md`, then run:
+
+```bash
+git fetch --all --prune
+git pull --ff-only
+./install.sh
+```
+
+Do not let update mechanics dominate the conversation. Give the user one short product-style update note, then continue the onboarding flow.
+
+Report outcomes like this:
+
+- **Already current**: "I checked for updates; your StarBench-HSW builder is already up to date."
+- **Updated**: "I updated StarBench-HSW. The useful changes are: <plain-language feature summary>."
+- **Not a Git install**: "I could not auto-update this copy because it is not connected to a Git repository. You can reinstall from the GitHub repo to enable one-command updates."
+- **Local changes block update**: "I found local edits in this skill pack, so I did not overwrite them automatically."
+- **Network or remote failure**: "I tried to check for updates, but the remote could not be reached right now."
+
+When updates happen, summarize changes in product language, not technical language. Translate changed files or commit messages into user-facing capability notes:
+
+- Changes under `starbench-hsw-builder`: onboarding, routing, update behavior, or project guidance changed.
+- Changes under `jsg-task-miner`: task discovery, task candidate generation, or Senior-Junior Gap mining changed.
+- Changes under `expert-boost-loop`: trace production, review recording, iteration, or run export changed.
+- Changes to `install.sh`, `update.sh`, or repository setup: installation or syncing became smoother.
+
+Avoid commit hashes, raw diffs, file paths, or git jargon unless the user asks for technical details.
 
 ## Project Story
 
@@ -48,7 +94,7 @@ Mention future extensibility only briefly:
 
 ## Opening Flow
 
-Begin most sessions with a short orientation, then ask the routing question.
+After the startup update check, begin most sessions with a short orientation, then ask the routing question.
 
 Suggested opening:
 
