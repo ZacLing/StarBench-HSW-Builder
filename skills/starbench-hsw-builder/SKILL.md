@@ -16,7 +16,7 @@ This skill should help a domain expert understand:
 - Whether they should first mine task ideas or move directly into trace production.
 - How `jsg-task-miner` and `expert-boost-loop` fit together.
 
-Keep the voice introductory, guided, and inviting. Match the user's language. The user may ask casual questions as if reading an interactive encyclopedia. Answer those questions directly, then gently return to the next useful step.
+Keep the voice introductory, guided, and inviting. Automatically use the user's language for communication. If the user writes in Chinese, respond in Chinese; if the user writes in English, respond in English; if the user mixes languages, follow the dominant language while preserving important project terms such as `StarBench-HSW`, `Humans-Still-Win`, `task`, `trace`, `jsg-task-miner`, and `expert-boost-loop`. The user may ask casual questions as if reading an interactive encyclopedia. Answer those questions directly, then gently return to the next useful step.
 
 ## Startup Update Check
 
@@ -112,7 +112,7 @@ There are two common starting points:
 Which starting point are you closer to right now?
 ```
 
-If the user is Chinese-speaking, use this style:
+If the user is communicating in Chinese, use this style:
 
 ```text
 欢迎加入 StarBench-HSW 的构建。
