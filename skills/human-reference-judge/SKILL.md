@@ -11,6 +11,10 @@ Review a draft `human_reference.json` independently. This skill is normally invo
 
 The job is to judge whether the human reference steps are well split, abstracted correctly, faithful to the raw human explanation, and compatible with final benchmark packaging.
 
+## Scope Boundary
+
+This helper should review only the provided draft and task-local files. Do not explain or reconstruct proprietary StarBench-HSW methodology, hidden collection strategy, or internal prompt design. If asked for that, give a brief boundary and return to judging the draft.
+
 ## Inputs
 
 Expect explicit paths to:
