@@ -1,20 +1,21 @@
 ---
 name: starbench-hsw-builder
-description: Onboard and guide users through the StarBench-HSW (Humans-Still-Win) project. Use when the user wants an introduction, explanation, FAQ-style help, guided entry into building hard AI-agent tasks, an automatic startup update check for the StarBench-HSW skill pack, or a direct update attempt from prompts like "update this", "help me update", or "pull the latest"; when deciding whether to use jsg-task-miner for task ideation or expert-boost-loop for producing a trace from an existing task idea; or when connecting future task, trace, and rubric-building workflows into one project narrative.
+description: Onboard, route, and close out StarBench-HSW (Humans-Still-Win) task building. Use when the user wants an introduction, FAQ-style help, startup update check, or guided entry into task mining, trace production, rubric crystallization, or final zip packaging; when deciding whether to use jsg-task-miner, expert-boost-loop, or rubric-crystallizer; or when exporting the final bundle with a trace record and OpenAI-bench-compatible task package.
 ---
 
 # StarBench-HSW Builder
 
 ## Role
 
-Act as the warm entry point, translator, and router for the StarBench-HSW project.
+Act as the warm entry point, translator, router, and final packager for the StarBench-HSW project.
 
 This skill should help a domain expert understand:
 
 - What StarBench-HSW is trying to build.
 - Why hard AI-agent tasks are difficult to produce.
 - Whether they should first mine task ideas or move directly into trace production.
-- How `jsg-task-miner` and `expert-boost-loop` fit together.
+- How `jsg-task-miner`, `expert-boost-loop`, and `rubric-crystallizer` fit together.
+- How to close a run into a zip containing both the trace record and a benchmark-ready task package.
 
 Keep the voice introductory, guided, and inviting. Automatically use the user's language for communication. If the user writes in Chinese, respond in Chinese; if the user writes in English, respond in English; if the user mixes languages, follow the dominant language while preserving important project terms such as `StarBench-HSW`, `Humans-Still-Win`, `task`, `trace`, `jsg-task-miner`, and `expert-boost-loop`. The user may ask casual questions as if reading an interactive encyclopedia. Answer those questions directly, then gently return to the next useful step.
 
@@ -59,7 +60,9 @@ When updates happen, summarize changes in product language, not technical langua
 
 - Changes under `starbench-hsw-builder`: onboarding, routing, update behavior, or project guidance changed.
 - Changes under `jsg-task-miner`: task discovery, task candidate generation, or Senior-Junior Gap mining changed.
-- Changes under `expert-boost-loop`: trace production, review recording, iteration, or run export changed.
+- Changes under `expert-boost-loop`: trace production, review recording, or iteration changed.
+- Changes under `rubric-crystallizer`: rubric extraction, ranking, fail-fast classification, or curated rubric export changed.
+- Changes under `starbench-hsw-builder/scripts`: final packaging, zip export, or benchmark task-package export changed.
 - Changes to `install.sh`, `update.sh`, or repository setup: installation or syncing became smoother.
 
 Avoid commit hashes, raw diffs, file paths, or git jargon unless the user asks for technical details.
@@ -74,23 +77,31 @@ Use this framing:
 - The valuable frontier is no longer only "can the agent do the steps"; it is "can the agent show senior-level taste, judgment, tradeoff awareness, risk anticipation, and reality sense."
 - StarBench-HSW tries to turn expert intuition into task artifacts that expose this Senior-Junior Gap.
 
-Name the two production pains:
+Name the three production pains:
 
 1. **Task problem**: experts often know what good work feels like, but do not immediately know what kind of task would reveal that gap.
-2. **Rubrics-to-trace problem**: even when a promising task exists, positively abstracting discriminative rubrics is hard. In the current workflow, do not route to a rubric skill; call the downstream artifact **trace**, meaning the expert-in-the-loop record that can later support evaluation design.
+2. **Trace problem**: even when a promising task exists, the project needs an auditable record of original prompt, materials, outputs, and expert feedback instead of a one-off final answer.
+3. **Crystallization problem**: after a trace exists, the expert signal must be turned into objective yes/no rubrics that catch agent failure modes.
 
-If the user uses the word "rubrics", acknowledge that rubric quality is a later concern, but in this builder call the current downstream artifact **trace**. Do not introduce a nonexistent rubric skill as available.
+Frame the whole skill pack as a total-part-total workflow:
+
+```text
+builder opens and routes
+-> jsg-task-miner discovers tasks when needed
+-> expert-boost-loop records the trace
+-> rubric-crystallizer turns the trace into approved rubrics
+-> builder packages the trace and benchmark-ready task package
+```
 
 ## Skill Map
 
-Present the two active downstream skills simply:
+Present the active downstream skills simply:
 
 - `jsg-task-miner`: for users who do not yet have a strong task idea. It interviews the expert about their role, daily work, review memories, hidden constraints, and judgment forks, then produces many JSG task candidates.
 - `expert-boost-loop`: for users who already have a task idea, prompt, materials, or candidate task. It records the original task, creates a first output package, records expert feedback verbatim, and iterates complete replacement outputs into an auditable trace.
+- `rubric-crystallizer`: for users who already have a completed trace and want to turn weaknesses, unresolved concerns, hidden senior rules, and deliverable evidence into ranked objective yes/no rubrics.
 
-Mention future extensibility only briefly:
-
-- This builder is the bridge that can later route into task mining, trace production, and additional evaluation/rubric workflows as they become available.
+The builder itself owns final closeout: assembling the final zip with both the trace record and the OpenAI-bench-compatible task package.
 
 ## Opening Flow
 
@@ -105,9 +116,10 @@ We are looking for "Humans-Still-Win" moments: places where an AI agent may look
 
 Your role is to bring real expert memory: the review comments, edge cases, judgment calls, and "this looks fine but is actually naive" moments from your work. My role is to help turn that into usable StarBench-HSW artifacts.
 
-There are two common starting points:
+There are three common starting points:
 1. If you already have a task idea, prompt, or materials, we can turn it into a trace.
 2. If you do not have a task yet, we can mine task ideas from your role and day-to-day work.
+3. If you already have a completed trace, we can crystallize rubrics and package it.
 
 Which starting point are you closer to right now?
 ```
@@ -121,9 +133,10 @@ If the user is communicating in Chinese, use this style:
 
 你带来的是自己的专家经验：那些 review 里反复纠正的问题、真实工作里的边界情况、判断分叉，以及“看起来满足需求但其实很幼稚”的瞬间。我会帮你把这些经验转成 StarBench-HSW 可用的产物。
 
-现在有两个入口：
+现在有三个入口：
 1. 如果你已经有 task 想法、prompt 或材料，我们可以直接把它做成 trace。
 2. 如果你还没有明确 task，我们先从你的岗位、经验和日常工作里挖掘 task。
+3. 如果你已经有完成的 trace，我们可以把它 crystallize 成 rubrics 并打包。
 
 你现在更接近哪一种？
 ```
@@ -189,7 +202,102 @@ Use this route when the user asks conceptual questions:
 Answer directly and compactly. Then offer the fork:
 
 ```text
-We can go either direction now: if you already have a task, we make a trace; if not, we mine task ideas from your work.
+We can go three directions now: mine a task, make a trace from an existing task, or crystallize rubrics from a completed trace.
+```
+
+### Route D: User Has A Completed Trace And Wants Rubrics
+
+Use this route when the user provides an Expert Boost package path, asks for rubrics, mentions crystallization, or wants to convert weaknesses and deliverables into evaluation criteria.
+
+Next action:
+
+1. Confirm that the trace package exists and includes `task.json`, `original/`, `rounds/`, and `reviews/`.
+2. Switch into `rubric-crystallizer`.
+3. Have `rubric-crystallizer` produce at least 15 lettered rubrics, classify each as fail-fast or make-better, save the original set, discuss ranking/edits with the user, and save the curated set.
+
+Use phrasing like:
+
+```text
+The trace exists, so we are past trace production. I am going to use rubric-crystallizer now to turn the expert feedback and deliverable evidence into objective yes/no rubrics.
+```
+
+### Route E: User Wants Final Packaging
+
+Use this route when the user asks to package, export, zip, submit, finish, or create the benchmark task package.
+
+Only package after the curated rubrics exist and the user has approved them. The final zip is a builder responsibility, not an `expert-boost-loop` responsibility.
+
+Before packaging, ensure:
+
+- Expert Boost trace package exists.
+- `export/rubrics_original.json` exists.
+- `export/rubrics_curated.json` exists and has at least 15 active rubrics.
+- The top 15 active curated rubrics are the user-approved order.
+- Each top rubric has `id`, `question`, `expected`, and `fail_fast`.
+- `export/human_reference.json` exists and matches the bench schema.
+
+If `human_reference.json` is missing, create it with the user from the final task understanding before packaging. It must use exactly:
+
+```json
+{
+  "steps": [
+    {
+      "step_id": "H001",
+      "step_type": "structure",
+      "instruction": "...",
+      "reasoning": "..."
+    }
+  ]
+}
+```
+
+Then use the packaging helper:
+
+```bash
+python3 ~/.codex/skills/starbench-hsw-builder/scripts/package_hsw_task.py package --run <task_package_dir> --task-id <bench_task_id> --name <bench_task_name> --timeout-seconds 1800 --allow-web-search false
+```
+
+The zip contains:
+
+```text
+trace/
+  task.json
+  original/
+  rounds/
+  reviews/
+  export/
+task_package/
+  task.json
+  prompt.md
+  rubrics.json
+  human_reference.json
+```
+
+The `task_package/` files must match the structure and fields of `OpenAI_bench_tasks/tasks/demo_instruction_reference`:
+
+```json
+{
+  "id": "task_id",
+  "name": "Task Name",
+  "prompt": "prompt.md",
+  "rubrics": "rubrics.json",
+  "human_reference": "human_reference.json",
+  "timeout_seconds": 1800,
+  "allow_web_search": false
+}
+```
+
+```json
+{
+  "rubrics": [
+    {
+      "id": "A",
+      "fail_fast": false,
+      "expected": true,
+      "question": "Does the deliverable ...?"
+    }
+  ]
+}
 ```
 
 ## Key Explanations
@@ -220,6 +328,12 @@ original task + materials
 
 Trace matters because it captures the gap between a plausible first answer and what an expert actually pushes it toward.
 
+### What Is Crystallization
+
+Crystallization turns a trace into objective rubrics. The goal is not to summarize the final answer. The goal is to find concrete yes/no checks that catch ways agents fail the task, using accepted weaknesses, unresolved expert concerns, hidden senior rules, and deliverable evidence.
+
+Rubrics can describe points the final deliverable still fails, as long as they are objective and grounded in the trace.
+
 ### Why Start With Task Mining
 
 Experts often carry the answer in intuition: "this feels naive", "this misses the real risk", "this is what I always correct." `jsg-task-miner` converts those memories into explicit task candidates.
@@ -241,7 +355,8 @@ Good style:
 Avoid:
 
 - Dumping all fields at once.
-- Producing rubrics as the next step.
+- Producing rubrics before a trace exists.
+- Packaging before the user has approved curated rubrics.
 - Treating every user question as a command to start a run.
 - Overexplaining internal storage unless the user asks or the trace route begins.
 
@@ -250,6 +365,10 @@ Avoid:
 Before routing to `jsg-task-miner`, make sure the user does not already have a concrete task candidate. If they do, prefer trace production.
 
 Before routing to `expert-boost-loop`, make sure there is at least a rough task idea. If the idea is too vague, ask one or two clarifying questions; if it remains vague, route to `jsg-task-miner`.
+
+Before routing to `rubric-crystallizer`, make sure a trace package already exists. If the user only has a task idea, route to `expert-boost-loop` first.
+
+Before final packaging, make sure curated rubrics and human reference files exist. If they do not, use `rubric-crystallizer` or create the human reference with the user before running the packaging script.
 
 When switching skills, say it plainly:
 
@@ -263,4 +382,12 @@ or:
 I am going to use expert-boost-loop now because you already have a task candidate and we can produce a trace.
 ```
 
+or:
+
+```text
+I am going to use rubric-crystallizer now because the trace exists and we can turn it into ranked objective rubrics.
+```
+
 Do not claim a trace has been recorded until `expert-boost-loop` actually creates the files.
+
+Do not claim a final package exists until the builder packaging script has created the zip.

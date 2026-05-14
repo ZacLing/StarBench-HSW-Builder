@@ -22,6 +22,7 @@ Installed skills:
 starbench-hsw-builder
 jsg-task-miner
 expert-boost-loop
+rubric-crystallizer
 ```
 
 After installation, start with:

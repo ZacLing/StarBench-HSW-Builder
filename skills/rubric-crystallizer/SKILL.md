@@ -1,0 +1,229 @@
+---
+name: rubric-crystallizer
+description: Convert a completed Expert Boost trace into objective yes/no evaluation rubrics. Use after expert-boost-loop has produced a trace and the user wants to crystallize accepted weaknesses, unresolved expert concerns, hidden senior rules, and deliverable evidence into at least 15 lettered rubrics, discuss ranking and edits with the user, classify each rubric as fail-fast or make-better, and save both original and curated rubric sets.
+---
+
+# Rubric Crystallizer
+
+Use this skill after an `expert-boost-loop` trace exists. The purpose is to turn the trace into objective benchmark rubrics that catch agent failure modes.
+
+Crystallization is not a summary of what improved from `v0` to `vN`. A rubric may describe a concern that remains unfixed in the final deliverable. The test is whether the point is objective, task-grounded, yes/no evaluable, and useful for identifying agents that would fail this task.
+
+## Core Rules
+
+- Generate at least 15 candidate rubrics before asking the user to rank or prune, unless the trace genuinely lacks enough objective signal.
+- Letter the original candidate rubrics `A`, `B`, `C`, and so on. After `Z`, continue with `AA`, `AB`, etc.
+- Write every rubric as a single yes/no question with an objective expected answer.
+- Each rubric must test one concrete point. Split multi-condition questions unless the condition is an inseparable basic compliance check.
+- Do not require the final deliverable to pass the rubric. Unresolved expert concerns can become strong rubrics.
+- Use accepted weaknesses and accepted hidden-rule rationales as the primary signal.
+- Use adjacent deliverable changes and `v0` versus final comparisons as supporting evidence, not as the main eligibility rule.
+- Drop or quarantine subjective, vague, unsupported, or non-evaluable feedback instead of forcing it into a rubric.
+- Classify every rubric as `fail_fast` or make-better and explain the classification to the user. Let the user change the type.
+- Save the full original generated set and the user-curated set as separate files. Never overwrite the original set after the user begins editing.
+
+## Rubric Types
+
+Use `fail_fast: true` for baseline pass/fail requirements. These are roughly the "60-point line": an agent that fails them has violated core task form, language, format, tooling, safety, or must-have constraints.
+
+Examples:
+
+- The task asks for C++ code and the deliverable is Python.
+- The required output file is missing.
+- The deliverable ignores a required data source.
+- The task prohibits web search but the answer cites unsupported external facts.
+- The task requires exactly one artifact and the output creates a different artifact shape.
+
+Use `fail_fast: false` for make-better rubrics. These distinguish stronger agents after basic compliance is met: senior judgment, risk control, concrete coverage, hidden constraints, tradeoffs, and domain-specific quality.
+
+Examples:
+
+- The deliverable distinguishes the buyer's metric from the end user's outcome.
+- The plan names a realistic rollback path for the riskiest operational step.
+- The analysis identifies a leakage risk implied by the provided dataset.
+
+If uncertain, default to make-better and ask the user whether the point should be a baseline failure.
+
+## Inputs
+
+The usual input is an Expert Boost task package directory with:
+
+```text
+task.json
+original/user_prompt.md
+original/materials/
+original/materials_manifest.json
+rounds/*/outputs/
+rounds/*/manifest.json
+reviews/*/review.json
+reviews/*/raw_user_input.md
+export/
+```
+
+Read only the trace package and explicitly provided supporting material paths. Preserve raw user text exactly when citing source weaknesses or rationales.
+
+## Workflow
+
+### 1. Build A Trace Map
+
+Inspect the package and summarize:
+
+- original task and materials;
+- all rounds and output directories;
+- accepted weaknesses and quality issues;
+- hidden-rule rationales admitted during review;
+- final output path;
+- any unresolved risks already recorded.
+
+Do not produce rubrics yet if key trace files are missing. Ask for the correct package path.
+
+### 2. Extract Failure Signals
+
+Treat accepted weaknesses as the main source. For each weakness, identify:
+
+- the concrete failure mode;
+- the artifact, section, claim, behavior, or omission it targets;
+- why it matters to the original task or end user;
+- whether it relies on a hidden senior/domain rule;
+- whether the signal is objective, subjective, unsupported, too broad, or duplicate.
+
+Also scan for repeated patterns across weaknesses, such as missing risk framing, wrong stakeholder objective, unsafe data handling, weak evidence checks, or failure to clarify ambiguity.
+
+### 3. Use Deliverables As Evidence
+
+Use deliverables in two supporting ways:
+
+- Compare `v{i-1}` to `v{i}` to locate how a weakness manifested and whether a later output addressed it.
+- Compare `v0` to the final output to discover discriminative candidate rubrics and evidence spans.
+
+These comparisons help with evidence and wording. They are not required for eligibility. A rubric may remain valid when all versions fail it, if the expert concern is objective and task-grounded.
+
+### 4. Draft Candidate Rubrics
+
+Generate at least 15 candidate rubrics. Prefer 15-25 if there is enough signal.
+
+Each candidate should have this rich internal shape:
+
+```json
+{
+  "id": "A",
+  "rank": null,
+  "question": "Does the deliverable ...?",
+  "expected": true,
+  "fail_fast": false,
+  "type_rationale": "Make-better because ...",
+  "source_weaknesses": ["r001_review: weakness 2"],
+  "source_evidence": {
+    "prompt_or_materials": [],
+    "reviews": [],
+    "deliverables": []
+  },
+  "v0_status": "fail|pass|unclear|not_checked",
+  "final_status": "fail|pass|unclear|not_checked",
+  "judge_guidance": "What an evaluator should look for.",
+  "reject_if": "Boundary conditions that should not count as a pass.",
+  "status": "candidate"
+}
+```
+
+Use `expected: true` for most positive rubrics. Use `expected: false` for prohibited behavior, such as "Does the deliverable claim that X alone solves Y?".
+
+### 5. Quality Gate
+
+Reject, revise, or ask the user before accepting any candidate that:
+
+- bundles multiple unrelated checks;
+- asks whether the answer is "good", "deep", "professional", or "comprehensive";
+- requires private intent or process knowledge to judge;
+- depends on unsupported external facts;
+- contradicts the original prompt or materials;
+- rewards verbosity rather than a concrete correct result;
+- cannot be answered yes/no from the output and task materials.
+
+Do not hide rejected signals. Summarize them separately as `not_crystallized` with the reason.
+
+### 6. Present For User Ranking
+
+Show the user the candidate list in lettered form:
+
+```text
+A: Does the deliverable ...? [make-better]
+B: Does the deliverable ...? [fail-fast]
+C: Does the deliverable ...? [make-better]
+```
+
+Then ask the user to reorder, edit, delete, or add rubrics. The user may reply like:
+
+```text
+C: ...
+B: ...
+A: ...
+D: ...
+Remove F
+Change C to: ...
+Add: ...
+```
+
+When discussing edits, protect objective yes/no judgeability. If the user proposes a subjective rubric, help tighten it into an observable question.
+
+### 7. Save Original And Curated Sets
+
+After the first candidate set is generated, save:
+
+```text
+export/rubrics_original.json
+export/rubrics_original.md
+```
+
+After the user approves ranking, edits, deletions, additions, and fail-fast labels, save:
+
+```text
+export/rubrics_curated.json
+export/rubrics_curated.md
+```
+
+Use the helper when useful:
+
+```bash
+python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py validate --file <rubrics_curated.json> --min-active 15
+python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py markdown --file <rubrics_curated.json> --out <rubrics_curated.md>
+python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py bench-rubrics --file <rubrics_curated.json> --out <rubrics.json> --limit 15
+```
+
+The original file should preserve every first-pass candidate. The curated file should preserve user edits, ranking, deletions, and additions. Deleted rubrics may remain in curated JSON with `status: "deleted_by_user"` but must not be exported to the final bench `rubrics.json`.
+
+## User-Facing Style
+
+Be collaborative and editorial. The user is the domain expert; Codex is the crystallization assistant.
+
+Keep the first presentation compact: show the lettered rubrics and type labels, then invite ranking and edits. Save detailed evidence in files rather than flooding the chat.
+
+When the user changes ranking or type labels, accept domain judgment unless it breaks objective evaluation. If it does break evaluation, explain the issue and offer a tighter wording.
+
+## Handoff To Builder
+
+When the curated rubrics are approved, tell the user that `starbench-hsw-builder` should do final packaging. The builder owns the final zip and the OpenAI bench task-package export.
+
+The final bench package uses only the top 15 active curated rubrics, preserving the user's ranked order. It must match the demo task schema:
+
+```text
+task.json
+prompt.md
+rubrics.json
+human_reference.json
+```
+
+The final `rubrics.json` contains only:
+
+```json
+{
+  "rubrics": [
+    {
+      "id": "A",
+      "fail_fast": false,
+      "expected": true,
+      "question": "Does the deliverable ...?"
+    }
+  ]
+}
+```

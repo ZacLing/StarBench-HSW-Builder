@@ -23,6 +23,7 @@ Use this skill to run a lightweight StarBoost-style improvement harness inside a
 - Do not feed strengths, scores, hidden notes, private reasoning, rubrics, or inferred references into the next round.
 - Preserve previous outputs for inspection, but write a full replacement package each boosted round.
 - Continue until the user provides no weaknesses, says the output is acceptable, or explicitly asks to finish.
+- Do not create the final benchmark task package or zip. After termination, hand off to `rubric-crystallizer` for rubrics and `starbench-hsw-builder` for final packaging.
 
 ## Executor Agent Architecture
 
@@ -408,6 +409,7 @@ If the user provides no weaknesses, says the output is acceptable, scores are hi
 2. Set `task.json.status` to `terminated`.
 3. Write `export/run_summary.json` and `export/run_summary.md`.
 4. Include original task path, round ids, review ids, final outputs path, and unresolved risks if any.
+5. Tell the user that the next step is `rubric-crystallizer` if they want objective rubrics, and `starbench-hsw-builder` after curated rubrics exist if they want the final zip package.
 
 ## User-Facing Replies
 
@@ -415,6 +417,6 @@ Keep replies compact:
 
 - After each executor output: report the task package path and output path, then show the comments template with the current minimum weakness count and two scores.
 - After each review: say the review was recorded. If the gate is not met, ask for the missing weaknesses or scores. If accepted and continuing, create the next complete package.
-- After termination: report the task package path, final output path, and export summary path.
+- After termination: report the task package path, final output path, and export summary path. Do not claim the benchmark package or final zip exists.
 
 Do not claim files were recorded unless they exist.
