@@ -216,6 +216,17 @@ def cmd_review_template(args: argparse.Namespace) -> None:
     min_weaknesses = max(0, int(args.min_weaknesses))
     strengths = "\n".join("- " for _ in range(max(min_strengths, 1)))
     weaknesses = "\n".join("- " for _ in range(min_weaknesses))
+    first_review_guidance = ""
+    if review_id == "r001_review":
+        first_review_guidance = """
+## First Review Guidance
+
+> For the first review, compare the current deliverables against the original task and materials.
+> Focus on concrete places where an agent is likely to fail: missing constraints, wrong assumptions, unsafe shortcuts, weak evidence, shallow reasoning, or hidden senior/domain rules.
+> If a weakness depends on an unstated industry rule or senior convention, include a short reason why that rule applies here.
+> If anything is unclear, you can ask a question first, then continue filling the comments.
+
+"""
     text = f"""# Expert Boost Comments - Reviewing `{round_under_review}`
 
 ## Round Information
@@ -228,6 +239,12 @@ def cmd_review_template(args: argparse.Namespace) -> None:
 | Minimum strengths requested | `{min_strengths}` |
 | Minimum weaknesses requested | `{min_weaknesses}` |
 | Created at | `{utc_now()}` |
+
+{first_review_guidance}## How To Fill This Out
+
+> Review only the current deliverables for this round.
+> Strengths are optional and lightweight; weaknesses should be specific enough for the next executor to act on.
+> The two scores mean different things: satisfaction is your satisfaction with this current version, while the 1-10 user-relative score uses your own work on this same task as the 5/10 anchor.
 
 ## Strengths
 
@@ -249,12 +266,14 @@ def cmd_review_template(args: argparse.Namespace) -> None:
 ## Latest Deliverables Satisfaction
 
 > Score the current deliverables only. Use an integer from 1 to 5, where 5 means very satisfied and 1 means very dissatisfied.
+> This is only about this version, not the whole trace or whether the task is finished.
 
 ()/5
 
 ## Latest Deliverables Aligns User Scores
 
-> Score the current deliverables against your own expected performance on this task. Use an integer from 1 to 10. Treat 5 as about the level you personally would have achieved on this task.
+> Score the current deliverables on a 1-10 scale, using your own performance on this same task as the 5/10 anchor.
+> Put an integer in the parentheses. A 5 means about as good as you personally would produce for this task; above 5 is better than your own likely work, below 5 is worse.
 
 ()/10
 

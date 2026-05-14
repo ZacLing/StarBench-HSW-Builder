@@ -16,7 +16,7 @@ Use this skill to run a lightweight StarBoost-style improvement harness inside a
 - If comments are too vague, subjective, or unactionable, ask the user to revise before creating the formal review record.
 - If a weakness introduces facts, requirements, or hidden rules beyond the original prompt and materials, require a plausible user rationale before accepting it.
 - After each executor output, show the user a comments template before asking for review.
-- Require the two review scores in every round: latest deliverable satisfaction and alignment against the user's own expected score.
+- Require the two review scores in every round: current-version satisfaction and current deliverable performance relative to the user's own work, where the user's own level on this task is the `5/10` anchor.
 - Main Codex judges both weakness quality and minimum useful weakness count for each round; do not use a purely mechanical round number rule.
 - Produce complete output packages for every round, never only patches.
 - Feed only the latest parsed weaknesses into the next revision round.
@@ -150,8 +150,8 @@ Decide the minimum weakness count for the current round from:
 - **Round maturity**: first and second reviews usually need more concrete weaknesses; later rounds may need fewer.
 - **User satisfaction language**: comments like "basically good", "acceptable", "only small issues", or "I am satisfied" lower the minimum; comments like "still far", "not usable", or "misses the point" raise it.
 - **Two scores**:
-  - `Latest Deliverables Satisfaction` is `1-5`, where `5` means very satisfied.
-  - `Latest Deliverables Aligns User Scores` is `1-10`, where `5` means about the user's own expected performance on this task.
+  - `Latest Deliverables Satisfaction` is only about the current version of the deliverables. It is an integer from `1-5`, where `5` means very satisfied and `1` means very dissatisfied.
+  - `Latest Deliverables Aligns User Scores` is the current deliverables' performance relative to the user's own work on this same task. It is an integer from `1-10`; the user's own level is the `5/10` anchor, so `5` means about as good as the user would personally produce on this task.
 - **Weakness specificity**: one precise, high-leverage weakness can be worth more than several vague complaints.
 - **Remaining leverage**: if the user is repeating prior feedback, only naming polish, or cannot identify actionable weaknesses despite high scores, the loop may be ready to terminate.
 
@@ -162,7 +162,7 @@ Default starting points:
 - Hard or highly expert task: ask for at least `5-7` weaknesses in the first review.
 - Strengths are lenient: usually ask for `0-1`; ask for more only when useful for audit context.
 
-Adjust from there. High satisfaction (`4-5/5`) and high alignment (`8-10/10`) can reduce the next minimum to `0-1`. Low satisfaction (`1-2/5`) or low alignment (`1-4/10`) should usually require several actionable weaknesses before another executor round.
+Adjust from there. High satisfaction (`4-5/5`) and a high user-relative score (`8-10/10`) can reduce the next minimum to `0-1`. Low satisfaction (`1-2/5`) or a low user-relative score (`1-4/10`) should usually require several actionable weaknesses before another executor round.
 
 These numbers are only anchors. Main Codex may override them when the user's natural-language comments clearly indicate more or less remaining expert signal than the scores alone suggest. Prefer thoughtful judgment over arithmetic.
 
@@ -189,6 +189,10 @@ For this round, please give at least <min_weaknesses> concrete weaknesses. Stren
 
 A useful weakness should name the specific section, claim, omission, behavior, or failure mode, and explain why it matters. Avoid vague comments like "make it better" or "too shallow" unless you specify what is shallow and what the next version should address.
 
+For the first review, compare the current deliverables against the original task and materials. Focus on concrete places where an agent is likely to fail: missing constraints, wrong assumptions, unsafe shortcuts, weak evidence, shallow reasoning, or hidden senior/domain rules. If a weakness depends on an unstated industry rule or senior convention, include a short reason why that rule applies here. It is okay if the first pass is not perfectly phrased; I can help tighten it.
+
+If anything is unclear, the user can ask a question first, then continue filling the comments.
+
 Strengths:
 - <optional strength>
 
@@ -196,9 +200,11 @@ Weaknesses:
 - <actionable weakness>
 
 Latest Deliverables Satisfaction:
+Current-version satisfaction only. Use 1-5, where 5 means very satisfied and 1 means very dissatisfied.
 ()/5
 
 Latest Deliverables Aligns User Scores:
+Score the current deliverables on a 1-10 scale where the user's own performance on this same task is the 5/10 anchor.
 ()/10
 
 Notes:
