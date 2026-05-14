@@ -51,8 +51,12 @@ def validate_item(item: dict[str, Any], index: int) -> list[str]:
     if not isinstance(item.get("fail_fast"), bool):
         errors.append(f"{prefix}.fail_fast must be boolean")
     question = str(item.get("question") or "").strip()
-    if question and not question.endswith("?"):
-        errors.append(f"{prefix}.question should be a question ending with `?`")
+    if question and not question.endswith(("?", "？")):
+        errors.append(f"{prefix}.question should be a question ending with `?` or `？`")
+    display_question = item.get("display_question")
+    if display_question is not None:
+        if not isinstance(display_question, str) or not display_question.strip():
+            errors.append(f"{prefix}.display_question must be a non-empty string when present")
     return errors
 
 
@@ -83,19 +87,21 @@ def cmd_markdown(args: argparse.Namespace) -> None:
     out = Path(args.out).expanduser().resolve()
     data = read_json(src)
     active = active_rubrics(data)
-    lines = ["# Curated Rubrics", ""]
+    lines = [f"# {args.title}", ""]
     if data.get("task_id"):
         lines.extend([f"Task ID: `{data['task_id']}`", ""])
     for item in active:
         label = "fail-fast" if item.get("fail_fast") else "make-better"
         rank = item.get("rank")
-        rank_text = f"Rank {rank}. " if rank is not None else ""
-        lines.append(f"- {rank_text}{item.get('id')}: {item.get('question')} [{label}]")
+        rank_text = f"{args.rank_label} {rank}. " if rank is not None else ""
+        question = str(item.get("display_question") or item.get("question") or "").strip()
+        lines.append(f"- {rank_text}{item.get('id')}: {question} [{label}]")
     deleted = [item for item in data.get("rubrics", []) if str(item.get("status") or "") == "deleted_by_user"]
     if deleted:
-        lines.extend(["", "## Deleted By User", ""])
+        lines.extend(["", f"## {args.deleted_title}", ""])
         for item in deleted:
-            lines.append(f"- {item.get('id')}: {item.get('question')}")
+            question = str(item.get("display_question") or item.get("question") or "").strip()
+            lines.append(f"- {item.get('id')}: {question}")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(str(out))
@@ -142,6 +148,9 @@ def build_parser() -> argparse.ArgumentParser:
     markdown = sub.add_parser("markdown")
     markdown.add_argument("--file", required=True)
     markdown.add_argument("--out", required=True)
+    markdown.add_argument("--title", default="Curated Rubrics")
+    markdown.add_argument("--rank-label", default="Rank")
+    markdown.add_argument("--deleted-title", default="Deleted By User")
     markdown.set_defaults(func=cmd_markdown)
 
     bench = sub.add_parser("bench-rubrics")

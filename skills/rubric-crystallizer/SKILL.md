@@ -21,6 +21,8 @@ Crystallization is not a summary of what improved from `v0` to `vN`. A rubric ma
 - Drop or quarantine subjective, vague, unsupported, or non-evaluable feedback instead of forcing it into a rubric.
 - Classify every rubric as `fail_fast` or make-better and explain the classification to the user. Let the user change the type.
 - Save the full original generated set and the user-curated set as separate files. Never overwrite the original set after the user begins editing.
+- Internal rubric reasoning and canonical stored questions may be English, but any rubric list shown directly to the user must be in the user's language.
+- When showing rubrics to the user, show the complete text of every rubric. Do not use abbreviated, summarized, or placeholder forms such as `Does the deliverable ...?`.
 
 ## Rubric Types
 
@@ -108,7 +110,8 @@ Each candidate should have this rich internal shape:
 {
   "id": "A",
   "rank": null,
-  "question": "Does the deliverable ...?",
+  "question": "Does the deliverable identify the specific customer segment affected by the pricing change?",
+  "display_question": "交付物是否识别了受定价变化影响的具体客户群体？",
   "expected": true,
   "fail_fast": false,
   "type_rationale": "Make-better because ...",
@@ -125,6 +128,8 @@ Each candidate should have this rich internal shape:
   "status": "candidate"
 }
 ```
+
+Use `question` for the canonical machine-readable yes/no question. It may be English. Use `display_question` for the full user-facing version in the user's language. If the user's language is English, `display_question` may equal `question`.
 
 Use `expected: true` for most positive rubrics. Use `expected: false` for prohibited behavior, such as "Does the deliverable claim that X alone solves Y?".
 
@@ -144,24 +149,24 @@ Do not hide rejected signals. Summarize them separately as `not_crystallized` wi
 
 ### 6. Present For User Ranking
 
-Show the user the candidate list in lettered form:
+Show the user the complete candidate list in lettered form. Use the user's language for every displayed rubric question, even if the stored canonical `question` is English. Do not collapse, shorten, summarize, or show only a sample of the rubric list.
 
 ```text
-A: Does the deliverable ...? [make-better]
-B: Does the deliverable ...? [fail-fast]
-C: Does the deliverable ...? [make-better]
+A: 交付物是否识别了受定价变化影响的具体客户群体？ [make-better]
+B: 交付物是否包含题目要求的唯一输出文件路径？ [fail-fast]
+C: 交付物是否明确指出了最高风险操作步骤的回滚或缓解方案？ [make-better]
 ```
 
 Then ask the user to reorder, edit, delete, or add rubrics. The user may reply like:
 
 ```text
-C: ...
-B: ...
-A: ...
-D: ...
+C: 交付物是否明确指出了最高风险操作步骤的回滚或缓解方案？
+B: 交付物是否包含题目要求的唯一输出文件路径？
+A: 交付物是否识别了受定价变化影响的具体客户群体？
+D: <完整 rubric 文本>
 Remove F
-Change C to: ...
-Add: ...
+Change C to: <完整修改后的 rubric 文本>
+Add: <完整新增 rubric 文本>
 ```
 
 When discussing edits, protect objective yes/no judgeability. If the user proposes a subjective rubric, help tighten it into an observable question.
@@ -186,17 +191,17 @@ Use the helper when useful:
 
 ```bash
 python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py validate --file <rubrics_curated.json> --min-active 15
-python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py markdown --file <rubrics_curated.json> --out <rubrics_curated.md>
+python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py markdown --file <rubrics_curated.json> --out <rubrics_curated.md> --title <title-in-user-language> --rank-label <rank-label-in-user-language> --deleted-title <deleted-section-title-in-user-language>
 python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py bench-rubrics --file <rubrics_curated.json> --out <rubrics.json> --limit 15
 ```
 
-The original file should preserve every first-pass candidate. The curated file should preserve user edits, ranking, deletions, and additions. Deleted rubrics may remain in curated JSON with `status: "deleted_by_user"` but must not be exported to the final bench `rubrics.json`.
+The original file should preserve every first-pass candidate. The curated file should preserve user edits, ranking, deletions, additions, canonical questions, and user-language `display_question` values. Deleted rubrics may remain in curated JSON with `status: "deleted_by_user"` but must not be exported to the final bench `rubrics.json`.
 
 ## User-Facing Style
 
 Be collaborative and editorial. The user is the domain expert; Codex is the crystallization assistant.
 
-Keep the first presentation compact: show the lettered rubrics and type labels, then invite ranking and edits. Save detailed evidence in files rather than flooding the chat.
+Keep the first presentation structured but complete: show every generated rubric with its letter, full user-language question, and type label, then invite ranking and edits. Save detailed evidence in files rather than flooding the chat.
 
 When the user changes ranking or type labels, accept domain judgment unless it breaks objective evaluation. If it does break evaluation, explain the issue and offer a tighter wording.
 
