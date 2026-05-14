@@ -1,0 +1,26 @@
+StarBench-HSW Builder
+Copyright (c) 2026 Stardust AI. All rights reserved.
+
+This repository is owned by Stardust AI and contains proprietary task-building,
+expert-feedback, rubric-crystallization, human-reference, and benchmark-packaging
+workflows.
+
+The following project names, workflow names, and related materials are proprietary
+to Stardust AI unless otherwise stated:
+
+- StarBench-HSW
+- Humans-Still-Win task construction workflows
+- Senior-Junior Gap task mining workflows
+- Expert Boost / expert-boost-loop workflows
+- Rubric Crystallizer / rubric-crystallizer workflows
+- Human Reference Collector / human-reference-collector workflows
+- StarBench-HSW Builder packaging and orchestration workflows
+
+The repository may include or reference third-party libraries, schemas,
+examples, or compatibility targets. Those third-party materials remain subject to
+their own terms. Compatibility with an external benchmark structure does not
+imply ownership of that external project, schema, trademark, or materials.
+
+Public visibility of this repository does not grant permission to copy,
+redistribute, commercialize, host, train models on, or reimplement the protected
+workflows and materials. See LICENSE and IP_NOTICE.md for details.

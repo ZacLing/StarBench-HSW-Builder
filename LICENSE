@@ -1,0 +1,72 @@
+Stardust AI Proprietary License
+Version 1.0
+
+Copyright (c) 2026 Stardust AI. All rights reserved.
+
+This repository, including without limitation its source code, skills, prompts,
+workflow definitions, documentation, scripts, task-building methods, rubric
+generation methods, human-reference collection methods, evaluation designs,
+examples, and any related materials (collectively, the "Project"), is proprietary
+to Stardust AI.
+
+1. Ownership
+
+Stardust AI owns all right, title, and interest in and to the Project, including
+all copyrightable expression, proprietary methodology, trade secrets, know-how,
+workflow design, benchmark construction logic, prompt orchestration, rubric
+crystallization approach, human-reference collection approach, and other
+intellectual property embodied in the Project.
+
+2. Limited Permission
+
+Unless Stardust AI has granted you a separate written agreement, you may only
+view the Project for internal evaluation, review, or use expressly authorized by
+Stardust AI. Any copy, clone, or fork of this repository is subject to this
+License and does not grant additional rights.
+
+3. Restrictions
+
+Without prior written permission from Stardust AI, you may not:
+
+- copy, modify, publish, distribute, sublicense, sell, lease, or transfer the
+  Project;
+- use the Project, in whole or in part, for commercial purposes;
+- operate, host, or provide the Project as a service, product, platform, API,
+  benchmark service, evaluation pipeline, or SaaS offering;
+- create, train, fine-tune, distill, evaluate, or improve any AI model, agent,
+  dataset, benchmark generator, rubric generator, or evaluator using the Project;
+- extract, reproduce, adapt, or reimplement the Project's proprietary workflows,
+  prompts, skill structure, rubric methods, human-reference methods, task-mining
+  methods, or benchmark construction logic for a competing or substitute product
+  or service;
+- remove, obscure, or alter Stardust AI notices, ownership statements, or
+  attribution;
+- use Stardust AI names, marks, branding, project names, or confusingly similar
+  names without written permission.
+
+4. No Implied Rights
+
+No license or other right is granted by implication, estoppel, public repository
+visibility, GitHub forking mechanics, or any other means. All rights not
+expressly granted are reserved by Stardust AI.
+
+5. Third-Party Materials
+
+Third-party software, schemas, examples, references, or dependencies included in
+or referenced by the Project remain subject to their own license terms. This
+License does not grant rights to third-party materials that Stardust AI does not
+own.
+
+6. Contributions
+
+Unless a separate written agreement says otherwise, any contribution submitted to
+this repository is provided under the terms described in CONTRIBUTING.md and may
+be used, modified, distributed, sublicensed, and commercialized by Stardust AI.
+
+7. Disclaimer
+
+THE PROJECT IS PROVIDED "AS IS" AND WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF MERCHANTABILITY, FITNESS FOR
+A PARTICULAR PURPOSE, TITLE, OR NON-INFRINGEMENT. STARDUST AI WILL NOT BE LIABLE
+FOR ANY CLAIM, DAMAGE, OR OTHER LIABILITY ARISING FROM OR RELATED TO THE PROJECT
+OR ITS USE.
