@@ -1,0 +1,7 @@
+interface:
+  display_name: "Human Reference Judge"
+  short_description: "Judge structured human reference steps"
+  default_prompt: "Use $human-reference-judge to review a draft human_reference.json for step split quality, instruction abstraction, reasoning specificity, and schema fit."
+
+policy:
+  allow_implicit_invocation: false

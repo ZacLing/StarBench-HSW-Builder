@@ -23,6 +23,8 @@ starbench-hsw-builder
 jsg-task-miner
 expert-boost-loop
 rubric-crystallizer
+human-reference-collector
+human-reference-judge
 ```
 
 After installation, start with:

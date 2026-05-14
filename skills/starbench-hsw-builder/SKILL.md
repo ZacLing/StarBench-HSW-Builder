@@ -1,6 +1,6 @@
 ---
 name: starbench-hsw-builder
-description: Onboard, route, and close out StarBench-HSW (Humans-Still-Win) task building. Use when the user wants an introduction, FAQ-style help, startup update check, or guided entry into task mining, trace production, rubric crystallization, or final zip packaging; when deciding whether to use jsg-task-miner, expert-boost-loop, or rubric-crystallizer; or when exporting the final bundle with a trace record and OpenAI-bench-compatible task package.
+description: Onboard, route, and close out StarBench-HSW (Humans-Still-Win) task building. Use when the user wants an introduction, FAQ-style help, startup update check, or guided entry into task mining, trace production, rubric crystallization, human reference collection, or final zip packaging; when deciding whether to use jsg-task-miner, expert-boost-loop, rubric-crystallizer, or human-reference-collector; or when exporting the final bundle with a trace record and OpenAI-bench-compatible task package.
 ---
 
 # StarBench-HSW Builder
@@ -14,10 +14,10 @@ This skill should help a domain expert understand:
 - What StarBench-HSW is trying to build.
 - Why hard AI-agent tasks are difficult to produce.
 - Whether they should first mine task ideas or move directly into trace production.
-- How `jsg-task-miner`, `expert-boost-loop`, and `rubric-crystallizer` fit together.
+- How `jsg-task-miner`, `expert-boost-loop`, `rubric-crystallizer`, and `human-reference-collector` fit together.
 - How to close a run into a zip containing both the trace record and a benchmark-ready task package.
 
-Keep the voice introductory, guided, and inviting. Automatically use the user's language for communication. If the user writes in Chinese, respond in Chinese; if the user writes in English, respond in English; if the user mixes languages, follow the dominant language while preserving important project terms such as `StarBench-HSW`, `Humans-Still-Win`, `task`, `trace`, `jsg-task-miner`, and `expert-boost-loop`. The user may ask casual questions as if reading an interactive encyclopedia. Answer those questions directly, then gently return to the next useful step.
+Keep the voice introductory, guided, and inviting. Automatically use the user's language for communication. If the user writes in Chinese, respond in Chinese; if the user writes in English, respond in English; if the user mixes languages, follow the dominant language while preserving important project terms such as `StarBench-HSW`, `Humans-Still-Win`, `task`, `trace`, `jsg-task-miner`, `expert-boost-loop`, `rubric-crystallizer`, and `human-reference-collector`. The user may ask casual questions as if reading an interactive encyclopedia. Answer those questions directly, then gently return to the next useful step.
 
 ## Startup Update Check
 
@@ -62,6 +62,7 @@ When updates happen, summarize changes in product language, not technical langua
 - Changes under `jsg-task-miner`: task discovery, task candidate generation, or Senior-Junior Gap mining changed.
 - Changes under `expert-boost-loop`: trace production, review recording, or iteration changed.
 - Changes under `rubric-crystallizer`: rubric extraction, ranking, fail-fast classification, or curated rubric export changed.
+- Changes under `human-reference-collector` or `human-reference-judge`: human reference collection, step structuring, independent review, or `human_reference.json` export changed.
 - Changes under `starbench-hsw-builder/scripts`: final packaging, zip export, or benchmark task-package export changed.
 - Changes to `install.sh`, `update.sh`, or repository setup: installation or syncing became smoother.
 
@@ -90,6 +91,7 @@ builder opens and routes
 -> jsg-task-miner discovers tasks when needed
 -> expert-boost-loop records the trace
 -> rubric-crystallizer turns the trace into ranked, user-reviewed rubrics
+-> human-reference-collector records the user's own solution process
 -> builder packages the trace and benchmark-ready task package
 ```
 
@@ -100,6 +102,7 @@ Present the active downstream skills simply:
 - `jsg-task-miner`: for users who do not yet have a strong task idea. It interviews the expert about their role, daily work, review memories, hidden constraints, and judgment forks, then helps them surface a real task opportunity with concrete or safely sanitized materials.
 - `expert-boost-loop`: for users who already have a task idea, prompt, materials, or candidate task. It records the original task, creates a first output package, records expert feedback verbatim, and iterates complete replacement outputs into an auditable trace.
 - `rubric-crystallizer`: for users who already have a completed trace and want to turn weaknesses, unresolved concerns, hidden senior rules, and deliverable evidence into ranked objective yes/no rubrics.
+- `human-reference-collector`: for users who already have curated rubrics and need to record how the human expert would solve the task step by step before final packaging. It saves raw user steps, structures them into `human_reference.json`, and uses an internal independent judge pass.
 
 The builder itself owns final closeout: assembling the final zip with both the trace record and the OpenAI-bench-compatible task package.
 
@@ -206,13 +209,13 @@ Next action:
 
 1. Briefly explain that the hard part is extracting the Senior-Junior Gap from their actual work memory.
 2. Switch into `jsg-task-miner`.
-3. Ask for role, years of experience, daily work, recent review/friction examples, hidden constraints, and common junior mistakes.
-4. Produce many task candidates, not a tiny list.
+3. Ask for role, years of experience, daily work, recent review/friction examples, hidden constraints, common junior mistakes, and real materials or safely sanitized artifacts they can provide.
+4. Help the user surface a small set of real task opportunities, not a large synthetic task list.
 
 Use phrasing like:
 
 ```text
-No problem. Then we should start by mining your expert intuition rather than forcing a task too early. I will use jsg-task-miner to turn your work memories into a batch of candidate tasks.
+No problem. Then we should start by mining your expert intuition rather than forcing a task too early. I will use jsg-task-miner to help you surface a real task opportunity from your work, ideally with concrete or safely sanitized materials.
 ```
 
 ### Route C: User Is Exploring Or Asking Questions
@@ -228,7 +231,7 @@ Use this route when the user asks conceptual questions:
 Answer directly and compactly. Then offer the fork:
 
 ```text
-We can go three directions now: mine a task, make a trace from an existing task, or crystallize rubrics from a completed trace.
+At the start, we usually choose between two paths: mine a real task from your work, or make a trace from an existing task. Later, after a trace exists, we crystallize rubrics, collect human reference steps, and package the benchmark task.
 ```
 
 ### Route D: User Has A Completed Trace And Wants Rubrics
@@ -240,6 +243,7 @@ Next action:
 1. Confirm that the trace package exists and includes `task.json`, `original/`, `rounds/`, and `reviews/`.
 2. Switch into `rubric-crystallizer`.
 3. Have `rubric-crystallizer` produce at least 15 lettered rubrics, classify each as fail-fast or make-better, save the original set, show all rubrics in full, require the user to rank/review them with the explicit format, discuss edits, and save the curated set.
+4. After curated rubrics are saved, switch into `human-reference-collector` before final packaging.
 
 Use phrasing like:
 
@@ -247,7 +251,23 @@ Use phrasing like:
 The trace exists, so we are past trace production. I am going to use rubric-crystallizer now to turn the expert feedback and deliverable evidence into objective yes/no rubrics.
 ```
 
-### Route E: User Wants Final Packaging
+### Route E: User Has Curated Rubrics And Needs Human Reference
+
+Use this route when curated rubrics exist and the user needs `human_reference.json`, asks for human reference collection, or is moving from rubrics toward final packaging.
+
+Next action:
+
+1. Confirm `export/rubrics_curated.json` exists.
+2. Switch into `human-reference-collector`.
+3. Ask the user for their own step-by-step solution process, save the raw notes, structure the steps, run the independent judge pass, and save `export/human_reference.json`.
+
+Use phrasing like:
+
+```text
+The curated rubrics are ready. Before packaging, I am going to use human-reference-collector to capture how you would solve the task yourself and turn that into the benchmark `human_reference.json`.
+```
+
+### Route F: User Wants Final Packaging
 
 Use this route when the user asks to package, export, zip, submit, finish, or create the benchmark task package.
 
@@ -286,7 +306,7 @@ Type H: fail-fast
 使用当前完整顺序，不做修改。
 ```
 
-If `human_reference.json` is missing, create it with the user from the final task understanding before packaging. It must use exactly:
+If `human_reference.json` is missing, switch into `human-reference-collector` before packaging. Do not invent the human reference locally from final task understanding alone; it should be grounded in the user's own step-by-step solution process. The final file must use exactly:
 
 ```json
 {
@@ -393,9 +413,13 @@ Crystallization turns a trace into objective rubrics. The goal is not to summari
 
 Rubrics can describe points the final deliverable still fails, as long as they are objective and grounded in the trace.
 
+### What Is Human Reference Collection
+
+Human reference collection records how the expert user would solve the task themselves. The raw explanation is preserved in the trace, then structured into step-by-step `human_reference.json` for the benchmark package. The user does not need to write schema fields; the skill structures and checks them.
+
 ### Why Start With Task Mining
 
-Experts often carry the answer in intuition: "this feels naive", "this misses the real risk", "this is what I always correct." `jsg-task-miner` converts those memories into explicit task candidates.
+Experts often carry the answer in intuition: "this feels naive", "this misses the real risk", "this is what I always correct." `jsg-task-miner` helps turn those memories into real task opportunities grounded in actual or safely sanitized materials.
 
 ### Why Use Expert-Boost Loop
 
@@ -427,7 +451,9 @@ Before routing to `expert-boost-loop`, make sure there is at least a rough task 
 
 Before routing to `rubric-crystallizer`, make sure a trace package already exists. If the user only has a task idea, route to `expert-boost-loop` first.
 
-Before final packaging, make sure curated rubrics and human reference files exist. If curated rubrics do not exist, use `rubric-crystallizer` and require the user to rank/review the full rubric list first. If the human reference does not exist, create it with the user before running the packaging script.
+Before routing to `human-reference-collector`, make sure curated rubrics exist. If curated rubrics do not exist, use `rubric-crystallizer` first.
+
+Before final packaging, make sure curated rubrics and human reference files exist. If curated rubrics do not exist, use `rubric-crystallizer` and require the user to rank/review the full rubric list first. If the human reference does not exist, use `human-reference-collector` before running the packaging script.
 
 When switching skills, say it plainly:
 
@@ -445,6 +471,12 @@ or:
 
 ```text
 I am going to use rubric-crystallizer now because the trace exists and we can turn it into ranked objective rubrics.
+```
+
+or:
+
+```text
+I am going to use human-reference-collector now because curated rubrics exist and we need the human expert's step-by-step solution process before packaging.
 ```
 
 Do not claim a trace has been recorded until `expert-boost-loop` actually creates the files.

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Human Reference Collector"
+  short_description: "Collect and structure human solution steps"
+  default_prompt: "Use $human-reference-collector to collect my human step-by-step solution process after rubrics are curated, structure it into human_reference.json, and save the raw notes."
+
+policy:
+  allow_implicit_invocation: true

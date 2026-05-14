@@ -210,9 +210,9 @@ Keep the first presentation structured but complete: show every generated rubric
 
 When the user changes ranking or type labels, accept domain judgment unless it breaks objective evaluation. If it does break evaluation, explain the issue and offer a tighter wording.
 
-## Handoff To Builder
+## Handoff To Human Reference
 
-When the curated rubrics have been ranked/reviewed and saved, tell the user that `starbench-hsw-builder` should do final packaging. The builder owns the final zip and the OpenAI bench task-package export.
+When the curated rubrics have been ranked/reviewed and saved, tell the user that `human-reference-collector` should collect the expert's own step-by-step solution process next. After `export/human_reference.json` exists, `starbench-hsw-builder` owns the final zip and the OpenAI bench task-package export.
 
 The final bench package uses only the top 15 active curated rubrics, preserving the user's ranked order. It must match the demo task schema:
 
