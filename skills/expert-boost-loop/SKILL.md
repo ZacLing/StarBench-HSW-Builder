@@ -1,6 +1,6 @@
 ---
 name: expert-boost-loop
-description: StarBoost-style expert-in-the-loop iteration for Codex conversations with an explicit user-chosen task package location, fresh isolated executor subagents for every output round, and host-Codex review governance. Use when a user provides an initial task prompt and materials, wants Codex to create a complete output package, then repeatedly records human comments, scores, strengths, and weaknesses verbatim, gates whether comments contain enough expert signal, and regenerates full improved packages using only accepted weaknesses as revision targets with an auditable local history.
+description: StarBoost-style expert-in-the-loop iteration for Codex conversations with an explicit user-chosen task package location, fresh isolated executor subagents for every output round, and host-Codex review governance. Use when a user provides an initial task prompt and materials, wants Codex to create a complete output package, then repeatedly collects human comments, scores, strengths, and weaknesses, rejects vague or subjective comments for revision before formal recording, gates whether accepted comments contain enough expert signal, and regenerates full improved packages using only accepted weaknesses as revision targets with an auditable local history.
 ---
 
 # Expert Boost Loop
@@ -12,10 +12,11 @@ Use this skill to run a lightweight StarBoost-style improvement harness inside a
 - Decide the task package location before initializing a run.
 - Main Codex orchestrates the run; a fresh executor subagent produces each cold-start or boosted output package.
 - Save the user's original task prompt exactly before acting on it.
-- Save every review-like user message exactly before interpreting it.
+- Save accepted review-like user messages exactly before sending them into the formal trace.
+- If comments are too vague, subjective, or unactionable, ask the user to revise before creating the formal review record.
 - After each executor output, show the user a comments template before asking for review.
 - Require the two review scores in every round: latest deliverable satisfaction and alignment against the user's own expected score.
-- Main Codex judges the minimum useful weakness count for each round; do not use a purely mechanical round number rule.
+- Main Codex judges both weakness quality and minimum useful weakness count for each round; do not use a purely mechanical round number rule.
 - Produce complete output packages for every round, never only patches.
 - Feed only the latest parsed weaknesses into the next revision round.
 - Do not feed strengths, scores, hidden notes, private reasoning, rubrics, or inferred references into the next round.
@@ -80,7 +81,43 @@ Give it:
 
 Main Codex hosts the review loop. The goal is not to maximize the number of rounds; it is to collect enough expert signal for the next executor to make a meaningful improvement, and to stop when additional review is unlikely to add value.
 
-Use judgment, not a rigid formula. Decide the minimum weakness count for the current round from:
+Use judgment, not a rigid formula. Gate comments in this order:
+
+1. **Quality gate**: are the proposed weaknesses objective, concrete, clear, and actionable enough to guide the next executor?
+2. **Quantity gate**: after low-quality weaknesses are excluded, are there enough useful weaknesses for this round?
+3. **Continuation gate**: given task difficulty, scores, comments, and remaining leverage, should another executor round run?
+
+The quality gate comes first. A review with five vague weaknesses is worse than a review with two precise, high-leverage weaknesses.
+
+### Weakness Quality Standard
+
+Judge weaknesses like serious OpenReview-style or academic reviewer comments. A good weakness should usually:
+
+- point to a concrete artifact location, section, claim, behavior, omission, assumption, or failure mode;
+- explain why it matters for the original task or end user;
+- be grounded in the current deliverable, task prompt, or provided materials rather than personal taste alone;
+- be specific enough that a fresh executor can act on it without seeing the host conversation;
+- avoid hidden answer leakage while still naming the substantive issue;
+- be distinct from other weaknesses.
+
+Poor weaknesses include:
+
+- "make it better";
+- "too vague" without naming what is vague;
+- "I do not like the tone" without tying tone to audience, task, or deliverable goal;
+- "missing details" without naming which details or where;
+- duplicated comments with different wording;
+- preferences that contradict the original task or provided materials.
+
+If comments do not pass this quality standard, do not create the formal `review.json` yet and do not launch the executor. Ask the user to revise, giving brief rewrite suggestions. Example:
+
+```text
+These comments are not quite actionable enough for the next executor yet. Could you rewrite them so each weakness names the specific section/claim/problem and why it matters? For example, instead of "too vague", write "The Risk Analysis section says the data should be minimized but does not identify which fields should be removed before vendor upload."
+```
+
+If only some weaknesses are good, tell the user which ones are usable and ask them to revise or replace the vague ones. If the user strongly insists on continuing anyway, record the review as forced and pass only the actionable weaknesses to the executor.
+
+Decide the minimum weakness count for the current round from:
 
 - **Task difficulty**: harder, more expert-heavy, or more ambiguous tasks need more weaknesses, especially in early rounds.
 - **Round maturity**: first and second reviews usually need more concrete weaknesses; later rounds may need fewer.
@@ -122,6 +159,8 @@ Then show the user the important parts directly in chat:
 
 ```text
 For this round, please give at least <min_weaknesses> concrete weaknesses. Strengths are optional/lightweight, but helpful for context. Please also fill in the two scores.
+
+A useful weakness should name the specific section, claim, omission, behavior, or failure mode, and explain why it matters. Avoid vague comments like "make it better" or "too shallow" unless you specify what is shallow and what the next version should address.
 
 Strengths:
 - <optional strength>
@@ -256,20 +295,21 @@ Instructions:
 
 When the user provides strengths, weaknesses, scores, comments, or any review-like feedback:
 
-1. Before interpreting the message, save it verbatim:
+1. First apply the Weakness Quality Standard. If the comments are too subjective, vague, duplicated, or unactionable, do not create the formal review record yet. Ask the user to revise and give one or two concrete rewrite suggestions.
+2. Once the review passes the quality gate, or the user strongly insists on continuing, save it verbatim:
 
 ```bash
-python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py record-review --run <task_package_dir> --round-under-review <latest_round_id> --raw-file <verbatim_review_file> --min-strengths <min_strengths> --min-weaknesses <min_weaknesses> --host-decision <request_more|continue|terminate>
+python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py record-review --run <task_package_dir> --round-under-review <latest_round_id> --raw-file <verbatim_review_file> --min-strengths <min_strengths> --min-weaknesses <min_weaknesses> --quality-decision <accepted|forced> --host-decision <request_more|continue|terminate>
 ```
 
-2. Parse strengths, weaknesses, scores, and notes conservatively from the raw text.
-3. If the user did not use the template headings, still save the raw text exactly, then pass host-parsed fields through `--strength`, `--weakness`, `--satisfaction`, `--aligns-user-score`, and `--notes` so `review.json` is structured without altering the raw text.
-4. Update `review.json` with parsed `strengths`, `weaknesses`, `scores`, `notes`, validation, and the host decision while keeping `raw_text` unchanged.
-5. If the review does not meet the current gate, preserve it first, then ask for the missing concrete weaknesses or scores. Do not launch the executor yet.
-6. If weaknesses are ambiguous, preserve the raw review first, then ask a concise clarification.
-7. If the user strongly insists on continuing despite an unmet gate, record with `--forced-by-user --host-decision continue`, then proceed using only actionable parsed weaknesses.
+3. Parse strengths, weaknesses, scores, and notes conservatively from the raw text.
+4. If the user did not use the template headings, still save the raw text exactly, then pass host-parsed fields through `--strength`, `--weakness`, `--satisfaction`, `--aligns-user-score`, and `--notes` so `review.json` is structured without altering the raw text.
+5. Update `review.json` with parsed `strengths`, `weaknesses`, `scores`, `notes`, validation, quality decision, and the host decision while keeping `raw_text` unchanged.
+6. If the review passes quality but does not meet the current quantity or score gate, preserve it first, then ask for the missing concrete weaknesses or scores. Do not launch the executor yet.
+7. If weaknesses are ambiguous after formal recording, ask a concise clarification before launching the executor.
+8. If the user strongly insists on continuing despite an unmet quality or quantity gate, record with `--forced-by-user --quality-decision forced --host-decision continue`, then proceed using only actionable parsed weaknesses.
 
-Never summarize instead of saving the raw user review.
+Never summarize instead of saving the raw user review once it is accepted into the formal trace.
 
 ## Boosted Round
 

@@ -111,6 +111,7 @@ def cmd_init(args: argparse.Namespace) -> None:
                     "latest_deliverables_satisfaction",
                     "latest_deliverables_aligns_user_score",
                 ],
+                "quality_gate_required": True,
                 "host_sets_min_weaknesses_each_round": True,
             },
             "rounds": [],
@@ -239,6 +240,8 @@ def cmd_review_template(args: argparse.Namespace) -> None:
 > Please provide at least {min_weaknesses} distinct, actionable weaknesses for this round.
 > The next executor will see only these weaknesses, not the strengths, scores, or notes.
 > If you believe no useful weaknesses remain, say so clearly and use the scores below.
+> Good weaknesses are objective, specific, clear, and grounded in the deliverable or task materials.
+> Avoid vague comments like "make it better", "too shallow", or "bad tone" unless you name the concrete issue and why it matters.
 
 {weaknesses}
 
@@ -313,6 +316,8 @@ def cmd_record_review(args: argparse.Namespace) -> None:
             "min_strengths": max(0, int(args.min_strengths)),
             "min_weaknesses": max(0, int(args.min_weaknesses)),
             "validation": validation,
+            "quality_decision": args.quality_decision,
+            "quality_issues": args.quality_issue,
             "host_decision": args.host_decision,
             "host_rationale": args.host_rationale or "",
             "forced_by_user": bool(args.forced_by_user),
@@ -400,6 +405,8 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--review-id", default=None)
     review.add_argument("--min-strengths", type=int, default=0)
     review.add_argument("--min-weaknesses", type=int, default=0)
+    review.add_argument("--quality-decision", choices=["accepted", "forced"], default="accepted")
+    review.add_argument("--quality-issue", action="append", default=[])
     review.add_argument("--host-decision", choices=["request_more", "continue", "terminate"], default="continue")
     review.add_argument("--host-rationale", default="")
     review.add_argument("--forced-by-user", action="store_true")
