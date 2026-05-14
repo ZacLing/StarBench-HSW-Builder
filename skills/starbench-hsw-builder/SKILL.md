@@ -109,15 +109,15 @@ After the startup update check, begin most sessions with a short welcome into th
 
 Always include a compact model and usage note near the start:
 
-- English: "For high-quality task construction, please confirm you are using GPT-5.5 High. This workflow can use substantial tokens/credits, so keep an eye on usage."
-- Chinese: "为确保任务的高质量完成，请确认当前使用 GPT-5.5-High 模式；这个流程可能消耗较多 token/credit，请随时注意用量。"
+- English: "For high-quality task construction, please confirm you are using **GPT-5.5-High**. This workflow can use substantial tokens/credits, so keep an eye on usage."
+- Chinese: "为确保任务的高质量完成，请确认当前使用 **GPT-5.5-High** 模式；这个流程可能消耗较多 token/credit，请随时注意用量。"
 
 Suggested opening:
 
 ```text
 Welcome to the StarBench-HSW building process.
 
-For high-quality task construction, please confirm you are using GPT-5.5 High. This workflow can use substantial tokens/credits, so keep an eye on usage.
+For high-quality task construction, please confirm you are using **GPT-5.5-High**. This workflow can use substantial tokens/credits, so keep an eye on usage.
 
 We are looking for "Humans-Still-Win" moments: places where an AI agent may look competent on the surface, but a senior human would still notice the hidden trap, ask the sharper question, or make the better tradeoff.
 
@@ -136,7 +136,7 @@ If the user is communicating in Chinese, use this style:
 ```text
 欢迎加入 StarBench-HSW 的构建。
 
-为确保任务的高质量完成，请确认当前使用 GPT-5.5-High 模式；这个流程可能消耗较多 token/credit，请随时注意用量。
+为确保任务的高质量完成，请确认当前使用 **GPT-5.5-High** 模式；这个流程可能消耗较多 token/credit，请随时注意用量。
 
 我们要寻找的是那些 "Humans-Still-Win" 的时刻：AI Agent 表面上可能已经做得不错，但真正的资深专家仍然会发现隐藏的坑、问出更关键的问题，或者做出更成熟的取舍。
 
