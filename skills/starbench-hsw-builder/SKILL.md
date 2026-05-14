@@ -97,7 +97,7 @@ builder opens and routes
 
 Present the active downstream skills simply:
 
-- `jsg-task-miner`: for users who do not yet have a strong task idea. It interviews the expert about their role, daily work, review memories, hidden constraints, and judgment forks, then produces many JSG task candidates.
+- `jsg-task-miner`: for users who do not yet have a strong task idea. It interviews the expert about their role, daily work, review memories, hidden constraints, and judgment forks, then helps them surface a real task opportunity with concrete or safely sanitized materials.
 - `expert-boost-loop`: for users who already have a task idea, prompt, materials, or candidate task. It records the original task, creates a first output package, records expert feedback verbatim, and iterates complete replacement outputs into an auditable trace.
 - `rubric-crystallizer`: for users who already have a completed trace and want to turn weaknesses, unresolved concerns, hidden senior rules, and deliverable evidence into ranked objective yes/no rubrics.
 
@@ -105,12 +105,17 @@ The builder itself owns final closeout: assembling the final zip with both the t
 
 ## Opening Flow
 
-After the startup update check, begin most sessions with a short welcome into the project, include the model and usage note, then ask the routing question.
+After the startup update check, begin most sessions with a short welcome into the project, include the model and usage note, include the process-clarity note, then ask the routing question.
 
 Always include a compact model and usage note near the start:
 
 - English: "For high-quality task construction, please confirm you are using **GPT-5.5-High**. This workflow can use substantial tokens/credits, so keep an eye on usage."
 - Chinese: "为确保任务的高质量完成，请确认当前使用 **GPT-5.5-High** 模式；这个流程可能消耗较多 token/credit，请随时注意用量。"
+
+Always include a bold process-clarity note near the start:
+
+- English: "**Because skills and LLMs cannot guarantee that every instruction will feel perfectly clear, explicit, or natural, please pause the workflow and ask directly in the chat whenever something is unclear. This skill already understands the project process and can continue after your question.**"
+- Chinese: "**由于 skills 和 LLM 本身的特性，无法保证每条指令都完全清晰、明确、自然；但本 skill 已经充分理解本项目流程。如果哪里不懂，随时停下进度，直接在对话框里询问即可。**"
 
 Suggested opening:
 
@@ -118,6 +123,8 @@ Suggested opening:
 Welcome to the StarBench-HSW building process.
 
 For high-quality task construction, please confirm you are using **GPT-5.5-High**. This workflow can use substantial tokens/credits, so keep an eye on usage.
+
+**Because skills and LLMs cannot guarantee that every instruction will feel perfectly clear, explicit, or natural, please pause the workflow and ask directly in the chat whenever something is unclear. This skill already understands the project process and can continue after your question.**
 
 We are looking for "Humans-Still-Win" moments: places where an AI agent may look competent on the surface, but a senior human would still notice the hidden trap, ask the sharper question, or make the better tradeoff.
 
@@ -137,6 +144,8 @@ If the user is communicating in Chinese, use this style:
 欢迎加入 StarBench-HSW 的构建。
 
 为确保任务的高质量完成，请确认当前使用 **GPT-5.5-High** 模式；这个流程可能消耗较多 token/credit，请随时注意用量。
+
+**由于 skills 和 LLM 本身的特性，无法保证每条指令都完全清晰、明确、自然；但本 skill 已经充分理解本项目流程。如果哪里不懂，随时停下进度，直接在对话框里询问即可。**
 
 我们要寻找的是那些 "Humans-Still-Win" 的时刻：AI Agent 表面上可能已经做得不错，但真正的资深专家仍然会发现隐藏的坑、问出更关键的问题，或者做出更成熟的取舍。
 
