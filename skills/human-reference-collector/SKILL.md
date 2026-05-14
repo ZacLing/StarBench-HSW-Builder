@@ -19,6 +19,7 @@ The collection posture matters: guide the expert to mentally replay how they wou
 
 - Ask the user for their own step-by-step solution process for the task.
 - Encourage detailed reconstruction of the user's actual thinking and solving process, but do not make collection overly strict. The user may write natural prose, bullets, or numbered steps.
+- Show a simple answer format example such as `步骤1: ... / 步骤2: ... / 步骤n: ...` so the user knows how to respond.
 - The user does not need to write `instruction`, `reasoning`, or `step_type`.
 - Preserve the raw user text exactly in the trace before restructuring it.
 - Treat raw detail as valuable: concrete evidence, intermediate conclusions, decision rules, false starts, checks, and expert assumptions should remain in `human_reference_raw.md` and later appear in `reasoning` when relevant.
@@ -28,6 +29,7 @@ The collection posture matters: guide the expert to mentally replay how they wou
 - Run one independent judge pass using `human-reference-judge` in a fresh no-context subagent when subagents are available.
 - Revise once from judge feedback, then save the final reference.
 - Do not package the final zip here. Hand off to `starbench-hsw-builder` after saving `export/human_reference.json`.
+- Do not interrupt the user-facing collection prompt to explain that curated rubrics are missing. If `export/rubrics_curated.json` is missing, still collect and save raw human reference and draft/final `human_reference` files; note internally that independent judge context or final packaging may be completed after rubrics are available.
 
 ## Files
 
@@ -76,6 +78,14 @@ Ask in the user's language. Chinese style:
 不用管 instruction、step_type 或 JSON 格式，也不用写得特别规整。请尽量按 step-by-step 还原你的真实解题过程，越详细越好。这里宁可写细一点：包括你会参考的材料位置、隐含判断、行业规则、容易出错的地方、你会如何排除错误方向，以及每一步得到的中间结论。
 
 如果某些步骤依赖行业经验、隐含规则、材料里的具体信息，也请直接写出来。你可以自己分 step；如果分得不完美也没关系，我后面会自动整理，并把最终 instruction 抽象化。
+
+你可以直接按这个形式写：
+
+步骤1: ...
+步骤2: ...
+步骤3: ...
+...
+步骤n: ...
 ```
 
 English style:
@@ -88,6 +98,14 @@ Please mentally replay the real work process. If you were solving this yourself,
 You do not need to write `instruction`, `step_type`, or JSON. It also does not need to be perfectly formatted. Please reconstruct your real solution process in as much step-by-step detail as possible. More detail is better here: include material references, hidden judgments, industry rules, likely error traps, how you would rule out wrong directions, and the concrete intermediate conclusion from each step.
 
 If a step depends on industry experience, hidden rules, or specific information from the materials, include that directly. You can split the steps yourself; if the split is imperfect, I will structure it afterward and make the final instructions abstract.
+
+You can write in this format:
+
+Step 1: ...
+Step 2: ...
+Step 3: ...
+...
+Step n: ...
 ```
 
 If the user gives a very short answer, ask once for more detail unless they clearly want to proceed. When asking, name the missing detail type, such as source details, intermediate conclusions, checks, hidden rules, or decision criteria.
@@ -164,6 +182,8 @@ Good `step_type`:
 ## Independent Judge Pass
 
 After creating `export/human_reference_draft.json`, spawn one fresh independent judge subagent when available.
+
+If `export/rubrics_curated.json` is missing, do not complain to the user during collection. Either omit that input from the judge prompt or skip the judge pass with a note in `export/human_reference_revision_notes.md`. The priority is to preserve the user's raw human reference while it is available.
 
 Use:
 
