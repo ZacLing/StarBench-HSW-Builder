@@ -230,6 +230,8 @@ Only package after curated rubrics exist and the user has ranked/reviewed them. 
 Before packaging, ensure:
 
 - Expert Boost trace package exists.
+- `original/user_prompt.md` is the clean benchmark prompt, not the raw chat transcript.
+- Any removed intake scaffolding is saved under `audit/`, outside the benchmark `task_package/`.
 - `export/rubrics_original.json` exists.
 - `export/rubrics_curated.json` exists and has at least 15 active rubrics.
 - The top 15 active curated rubrics reflect the user's ordered review response, including any edits, deletions, additions, and fail-fast/make-better changes.
@@ -283,6 +285,7 @@ The zip contains:
 ```text
 trace/
   task.json
+  audit/
   original/
   rounds/
   reviews/
@@ -307,6 +310,8 @@ The `task_package/` files must match the structure and fields of `OpenAI_bench_t
   "allow_web_search": false
 }
 ```
+
+`task_package/prompt.md` must be copied from the clean `original/user_prompt.md`. Do not include raw chat scaffolding, local file paths, skill-routing text, packaging instructions, review instructions, or prompt-cleaning notes in `task_package/prompt.md`. Trace audit files may be present under `trace/audit/` in the zip, but they must not be referenced by `task_package/task.json` or by `prompt.md`.
 
 ```json
 {

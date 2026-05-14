@@ -116,7 +116,7 @@ def copy_trace(run: Path, trace_dir: Path) -> None:
         src = run / name
         if src.exists():
             shutil.copy2(src, trace_dir / name)
-    for name in ("original", "rounds", "reviews"):
+    for name in ("audit", "original", "rounds", "reviews"):
         src = run / name
         if src.exists():
             shutil.copytree(src, trace_dir / name)

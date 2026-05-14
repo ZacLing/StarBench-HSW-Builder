@@ -11,7 +11,9 @@ Use this skill to run a lightweight StarBoost-style improvement harness inside a
 
 - Decide the task package location before initializing a run.
 - Main Codex orchestrates the run; a fresh executor subagent produces each cold-start or boosted output package.
-- Save the user's original task prompt exactly before acting on it.
+- Save the user's raw initial request exactly in `audit/raw_user_prompt.md`, then create a clean execution prompt in `original/user_prompt.md`.
+- Keep `original/user_prompt.md` as the task prompt only: remove chat scaffolding, skill invocation text, local file-path listings, package-location discussion, and other host-only intake context.
+- Save removed host/intake context in `audit/prompt_intake_notes.md` when present. Audit files are trace-only and must not be passed to executor agents or exported as benchmark task prompt context.
 - Save accepted review-like user messages exactly before sending them into the formal trace.
 - If comments are too vague, subjective, or unactionable, ask the user to revise before creating the formal review record.
 - If a weakness introduces facts, requirements, or hidden rules beyond the original prompt and materials, require a plausible user rationale before accepting it.
@@ -31,7 +33,7 @@ Use a separate executor subagent for every production round. The executor is the
 
 Main Codex responsibilities:
 
-- Save the original task, reviews, prompts, weaknesses, manifests, and summaries.
+- Save the raw request, clean task prompt, reviews, prompts, weaknesses, manifests, and summaries.
 - Decide exactly what the executor may see.
 - Create the round prompt file before launching the executor.
 - Launch one fresh executor per round.
@@ -46,6 +48,7 @@ Executor requirements:
 - Do not fork the current conversation context into the executor. Use `fork_context=false` or the closest available equivalent.
 - Give the executor only the round prompt text and explicit filesystem paths it needs.
 - Instruct the executor to inspect only the task package and provided material paths. This is not a hard sandbox, so state the boundary plainly in the executor prompt.
+- Do not give the executor `audit/raw_user_prompt.md`, `audit/prompt_intake_notes.md`, packaging notes, or any host-only intake transcript.
 - Instruct the executor that it is not alone in the workspace, must not revert unrelated edits, and must write only inside the target round `outputs/` directory unless the prompt explicitly names other allowed write paths.
 - Close the executor after the round is complete.
 
@@ -214,7 +217,7 @@ If the user's language is not English, translate the visible labels and explanat
 
 ## Storage
 
-The task package is the run root directory that contains `task.json`, `original/`, `rounds/`, `reviews/`, and `export/`.
+The task package is the run root directory that contains `task.json`, `audit/`, `original/`, `rounds/`, `reviews/`, and `export/`.
 
 Strongly recommend that the user choose this location before the run starts so they can find the package later. The user may provide either:
 
@@ -237,6 +240,9 @@ Keep this structure inside the chosen task package:
 
 ```text
 task.json
+audit/
+  raw_user_prompt.md
+  prompt_intake_notes.md
 original/user_prompt.md
 original/materials/
 original/materials_manifest.json
@@ -254,6 +260,8 @@ export/
 ```
 
 Use `scripts/boost_record.py` for deterministic initialization, review recording, and manifests.
+
+`original/user_prompt.md` is the clean task prompt used for executor rounds and final benchmark packaging. `audit/raw_user_prompt.md` preserves the user's exact initial message for trace audit. `audit/prompt_intake_notes.md` stores removed scaffolding such as "Files mentioned by the user", local file paths, "Use expert-boost-loop", package-location discussion, or other host workflow context. Audit files are copied into the final zip under `trace/audit/`, but never into `task_package/` and never into executor allowed read paths.
 
 When the user provides an exact package directory, initialize with:
 
@@ -277,7 +285,7 @@ When the user gives the initial task and materials:
    - If no location was provided, ask once using the Storage prompt above.
    - If the user says Codex should decide, choose `.codex-starboost/<task_slug>/` in the current workspace.
 2. Choose a short filesystem-safe `task_slug` when needed.
-3. Save the initial user prompt verbatim. Prefer one of:
+3. Save the initial user message as raw audit input and create the clean execution prompt. Prefer one of:
 
 ```bash
 python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py init --run <task_package_dir> --prompt-file <verbatim_prompt_file> --material <path> ...
@@ -285,6 +293,22 @@ python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py init --base <p
 ```
 
 If the prompt is only in chat, create a temporary file containing the exact text first, then run `init`.
+
+`boost_record.py init` automatically strips common chat scaffolding from the clean prompt while preserving the raw text in `audit/raw_user_prompt.md`. If automatic cleaning would be risky, create a separate clean prompt file and pass `--clean-prompt-file <clean_prompt_file>` while still passing the raw chat text through `--prompt-file`.
+
+The clean prompt should preserve the user's actual task request, such as:
+
+```text
+这个是客户的 SOW，请你点对点应答，写成一个图文并茂的 docx，需要能够体现出我们的技术方案的优势。
+```
+
+It should not include:
+
+- `# Files mentioned by the user`;
+- local filesystem paths pasted by the client UI;
+- `用expert-boost-loop skill` or similar skill-routing text;
+- package-location negotiation;
+- host instructions about trace storage, rubric extraction, or final zip creation.
 
 4. Copy or reference user-provided material paths under `original/materials/` when possible.
 5. Create `rounds/v000_cold_start/prompt.md` with the cold-start prompt below.
@@ -307,7 +331,7 @@ Use this pattern internally for `rounds/v000_cold_start/prompt.md`:
 You are producing the first complete deliverable package for the user's task.
 
 Original user prompt:
-<verbatim original prompt>
+<clean task prompt from original/user_prompt.md>
 
 Available materials:
 <list material paths>
@@ -319,6 +343,7 @@ Instructions:
   <task_package_dir>/rounds/v000_cold_start/outputs/
 - You are a fresh executor agent. You do not have the host conversation context.
 - Inspect only the task package paths and material paths listed here. Do not browse the wider workspace.
+- Do not inspect or rely on `audit/` files; they contain host-only trace metadata, not execution context.
 - You are not alone in the workspace; do not revert unrelated edits or modify files outside the target output directory.
 - Do not produce a draft unless the user asked for a draft.
 - Do not mention this harness in the deliverable unless the user asked for process notes.
@@ -384,7 +409,7 @@ You are working on a StarBoost-style revision round.
 Your job is to produce a polished, complete replacement deliverable package for the original user task.
 
 Original user prompt:
-<verbatim original prompt>
+<clean task prompt from original/user_prompt.md>
 
 Previous deliverables are available at:
 <previous outputs path>
@@ -397,6 +422,7 @@ Instructions:
 - Use the latest weaknesses as required revision targets.
 - You are a fresh executor agent. You do not have the host conversation context.
 - Inspect only the task package paths, previous output path, and material paths listed here. Do not browse the wider workspace.
+- Do not inspect or rely on `audit/` files; they contain host-only trace metadata, not execution context.
 - You are not alone in the workspace; do not revert unrelated edits or modify files outside the target output directory.
 - Do not answer the reviewer.
 - Do not write a change log unless the original task asks for one.

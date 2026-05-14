@@ -37,6 +37,70 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def strip_code_fence(value: str) -> str:
+    text = value.strip()
+    if text.startswith("```") and text.endswith("```"):
+        lines = text.splitlines()
+        if len(lines) >= 2:
+            return "\n".join(lines[1:-1]).strip()
+    return value.strip()
+
+
+def clean_prompt(raw_text: str) -> tuple[str, str, dict[str, Any]]:
+    """Split chat scaffolding from the task prompt.
+
+    The clean prompt is what executors and benchmark task packages should see.
+    Removed scaffolding remains audit-only and must not be passed as execution context.
+    """
+
+    normalized = raw_text.replace("\r\n", "\n")
+    notes: list[str] = []
+    transformations: list[str] = []
+    text = normalized
+
+    request_heading = re.search(r"(?im)^##\s*My request for Codex:\s*$", text)
+    if request_heading:
+        before = text[: request_heading.start()].strip()
+        after = text[request_heading.end() :].strip()
+        if before:
+            notes.append("## Removed pre-request scaffolding\n\n" + before)
+        text = after
+        transformations.append("extracted_body_after_my_request_heading")
+
+    kept_lines: list[str] = []
+    removed_lines: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        lower = stripped.lower()
+        is_skill_invocation = bool(
+            re.fullmatch(r"(use\s+)?\$?expert-boost-loop(\s+skill)?", lower)
+            or re.fullmatch(r"用\s*expert-boost-loop\s*skill", stripped, flags=re.IGNORECASE)
+            or re.fullmatch(r"使用\s*expert-boost-loop\s*skill", stripped, flags=re.IGNORECASE)
+        )
+        is_file_heading = bool(re.fullmatch(r"#*\s*files mentioned by the user:\s*", lower))
+        is_empty_file_marker = bool(re.fullmatch(r"##\s*[^:]+:\s*[A-Za-z]:[\\/].*", stripped))
+        if is_skill_invocation or is_file_heading or is_empty_file_marker:
+            removed_lines.append(line)
+            continue
+        kept_lines.append(line)
+
+    if removed_lines:
+        notes.append("## Removed inline scaffolding\n\n" + "\n".join(removed_lines).strip())
+        transformations.append("removed_skill_invocations_or_file_scaffolding")
+
+    clean = strip_code_fence("\n".join(kept_lines))
+    clean = re.sub(r"\n{3,}", "\n\n", clean).strip()
+    if not clean:
+        clean = normalized.strip()
+        transformations.append("fallback_to_raw_prompt_because_clean_was_empty")
+
+    metadata = {
+        "clean_prompt_changed": clean != normalized.strip(),
+        "transformations": transformations,
+    }
+    return clean + "\n", ("\n\n".join(notes).strip() + "\n" if notes else ""), metadata
+
+
 def copy_material(src: Path, materials_dir: Path) -> dict[str, Any]:
     src = src.expanduser().resolve()
     target = materials_dir / src.name
@@ -73,16 +137,31 @@ def cmd_init(args: argparse.Namespace) -> None:
         base = Path(args.base).expanduser()
         run = (base / slug).resolve()
     original = run / "original"
+    audit = run / "audit"
     materials_dir = original / "materials"
     rounds = run / "rounds"
     reviews = run / "reviews"
     export = run / "export"
-    for path in (original, materials_dir, rounds, reviews, export):
+    for path in (original, audit, materials_dir, rounds, reviews, export):
         path.mkdir(parents=True, exist_ok=True)
 
     prompt_path = Path(args.prompt_file).expanduser().resolve()
-    prompt_text = prompt_path.read_text(encoding="utf-8")
+    raw_prompt_text = prompt_path.read_text(encoding="utf-8")
+    (audit / "raw_user_prompt.md").write_text(raw_prompt_text, encoding="utf-8")
+    if args.clean_prompt_file:
+        clean_prompt_path = Path(args.clean_prompt_file).expanduser().resolve()
+        prompt_text = clean_prompt_path.read_text(encoding="utf-8")
+        intake_notes = ""
+        prompt_cleaning = {
+            "clean_prompt_changed": prompt_text.strip() != raw_prompt_text.strip(),
+            "transformations": ["used_explicit_clean_prompt_file"],
+            "clean_prompt_source": str(clean_prompt_path),
+        }
+    else:
+        prompt_text, intake_notes, prompt_cleaning = clean_prompt(raw_prompt_text)
     (original / "user_prompt.md").write_text(prompt_text, encoding="utf-8")
+    if intake_notes:
+        (audit / "prompt_intake_notes.md").write_text(intake_notes, encoding="utf-8")
 
     materials = []
     for item in args.material or []:
@@ -102,6 +181,9 @@ def cmd_init(args: argparse.Namespace) -> None:
             "status": "initialized",
             "package_root": str(run),
             "original_prompt": str(original / "user_prompt.md"),
+            "raw_user_prompt": str(audit / "raw_user_prompt.md"),
+            "prompt_intake_notes": str(audit / "prompt_intake_notes.md") if (audit / "prompt_intake_notes.md").exists() else None,
+            "prompt_cleaning": prompt_cleaning,
             "materials_manifest": str(original / "materials_manifest.json"),
             "current_round": None,
             "next_review_index": 1,
@@ -414,6 +496,7 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--base", default=".codex-starboost")
     init.add_argument("--run", default=None, help="Exact task package directory to create/use.")
     init.add_argument("--prompt-file", required=True)
+    init.add_argument("--clean-prompt-file", default=None)
     init.add_argument("--material", action="append", default=[])
     init.add_argument("--force", action="store_true")
     init.set_defaults(func=cmd_init)
