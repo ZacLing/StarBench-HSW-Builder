@@ -33,7 +33,8 @@ Check:
 - **Schema**: top-level object contains only `steps`; each step has exactly `step_id`, `step_type`, `instruction`, and `reasoning`.
 - **Step split**: each step is a minimal key reasoning unit; steps are split by newly introduced bottlenecks.
 - **Instruction abstraction**: `instruction` says what to do, but does not include concrete answers, exact values, specific intermediate conclusions, or final results.
-- **Reasoning specificity**: `reasoning` states what information is used, how it is used, and what concrete intermediate conclusion is reached.
+- **Reasoning specificity**: `reasoning` states what information is used, how it is used, what expert judgment or check is applied, and what concrete intermediate conclusion is reached.
+- **Detail preservation**: useful raw expert details, material references, hidden rules, checks, and intermediate conclusions are preserved in `reasoning`, not flattened away.
 - **Step type**: `step_type` is a concise summary label, not a fixed taxonomy. Do not require categories such as `source`, `common_knowledge`, or `professional_knowledge`.
 - **Raw fidelity**: the draft does not invent steps unsupported by the raw human process, prompt, or materials.
 - **Task fit**: the steps describe how a human solves the task, not how an evaluator scores a submission.

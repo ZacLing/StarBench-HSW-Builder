@@ -13,12 +13,15 @@ The goal is to collect how the human expert would solve the task themselves, pre
 
 This is not another rubric workflow. It is a human solution process workflow.
 
+The collection posture matters: guide the expert to mentally replay how they would solve the task if they were doing it themselves. The raw answer should preserve rich details; the later structured `instruction` fields should become abstract.
+
 ## Core Rules
 
 - Ask the user for their own step-by-step solution process for the task.
-- Encourage detail, but do not make collection overly strict. The user may write natural prose, bullets, or numbered steps.
+- Encourage detailed reconstruction of the user's actual thinking and solving process, but do not make collection overly strict. The user may write natural prose, bullets, or numbered steps.
 - The user does not need to write `instruction`, `reasoning`, or `step_type`.
 - Preserve the raw user text exactly in the trace before restructuring it.
+- Treat raw detail as valuable: concrete evidence, intermediate conclusions, decision rules, false starts, checks, and expert assumptions should remain in `human_reference_raw.md` and later appear in `reasoning` when relevant.
 - Use an English internal structuring prompt, but communicate with the user and write user-visible content in the user's language unless the user requested another language.
 - Produce `human_reference.json` with exactly `steps`, where each step has `step_id`, `step_type`, `instruction`, and `reasoning`.
 - `step_type` is a concise summarized label for the step. It is not limited to a fixed taxonomy.
@@ -43,6 +46,24 @@ export/human_reference.md
 
 `human_reference.json` is the benchmark file that `starbench-hsw-builder` copies into `task_package/human_reference.json`.
 
+## Expert Elicitation
+
+Do not only ask "what are the steps?" Help the expert remember the real solving process.
+
+Useful prompts:
+
+- "If you were doing this yourself, what would you look at first?"
+- "What detail in the prompt or materials would you treat as controlling?"
+- "What would you check before committing to the answer?"
+- "Where would a junior or agent likely jump too fast?"
+- "What intermediate conclusion would you need before moving on?"
+- "Which industry rule, hidden convention, or personal expert habit would you apply here?"
+- "What would make you revise or reject an early direction?"
+
+Ask for detail in the raw collection, then abstract later. The user should feel invited to write the messy expert path: observations, checks, material references, judgment calls, intermediate conclusions, and why each next step follows.
+
+Do not ask the user to make `instruction` abstract. That is the collector's job during structuring.
+
 ## Collection Prompt
 
 Ask in the user's language. Chinese style:
@@ -50,9 +71,11 @@ Ask in the user's language. Chinese style:
 ```text
 接下来需要收集 human reference：也就是如果你自己来解决这个 task，你会如何一步步完成。
 
-不用管 instruction、step_type 或 JSON 格式，也不用写得特别规整。请尽量按 step-by-step 写出你的真实解题过程，越详细越好：你会先看什么、依据什么材料、做什么判断、如何推导、得到什么中间结论、再进入下一步。
+请尽量把自己代入真实工作状态：如果是你亲自做，你会先看什么、抓住哪些材料或信息、做什么判断、怎么推导、得到哪些中间结论、如何检查方向是否对、然后为什么进入下一步。
 
-如果某些步骤依赖行业经验、隐含规则、材料里的具体信息，也请直接写出来。你可以自己分 step；如果分得不完美也没关系，我后面会自动整理。
+不用管 instruction、step_type 或 JSON 格式，也不用写得特别规整。请尽量按 step-by-step 还原你的真实解题过程，越详细越好。这里宁可写细一点：包括你会参考的材料位置、隐含判断、行业规则、容易出错的地方、你会如何排除错误方向，以及每一步得到的中间结论。
+
+如果某些步骤依赖行业经验、隐含规则、材料里的具体信息，也请直接写出来。你可以自己分 step；如果分得不完美也没关系，我后面会自动整理，并把最终 instruction 抽象化。
 ```
 
 English style:
@@ -60,12 +83,14 @@ English style:
 ```text
 Next I need to collect the human reference: how you personally would solve this task step by step.
 
-You do not need to write `instruction`, `step_type`, or JSON. It also does not need to be perfectly formatted. Please describe your real solution process in as much step-by-step detail as possible: what you inspect first, what materials or facts you rely on, what judgment you apply, how you derive each intermediate conclusion, and how you move to the next step.
+Please mentally replay the real work process. If you were solving this yourself, what would you inspect first, what material or information would control the answer, what judgment would you apply, what intermediate conclusions would you reach, how would you check whether the direction is right, and why would you move to the next step?
 
-If a step depends on industry experience, hidden rules, or specific information from the materials, include that directly. You can split the steps yourself; if the split is imperfect, I will structure it afterward.
+You do not need to write `instruction`, `step_type`, or JSON. It also does not need to be perfectly formatted. Please reconstruct your real solution process in as much step-by-step detail as possible. More detail is better here: include material references, hidden judgments, industry rules, likely error traps, how you would rule out wrong directions, and the concrete intermediate conclusion from each step.
+
+If a step depends on industry experience, hidden rules, or specific information from the materials, include that directly. You can split the steps yourself; if the split is imperfect, I will structure it afterward and make the final instructions abstract.
 ```
 
-If the user gives a very short answer, ask once for more detail unless they clearly want to proceed.
+If the user gives a very short answer, ask once for more detail unless they clearly want to proceed. When asking, name the missing detail type, such as source details, intermediate conclusions, checks, hidden rules, or decision criteria.
 
 Save the raw answer before restructuring it. Use the helper when convenient:
 
@@ -87,11 +112,13 @@ Follow these step-level principles:
 1. A step is a minimal key reasoning unit on the shortest credible solution path.
 2. Split by newly introduced core bottlenecks. Prefer 6-12 steps when the task has enough substance, but do not force the count if the task is much simpler or more complex.
 3. Each step must contain:
-   - `instruction`: abstract guidance only. It must describe what to do, not the specific answer, value, intermediate result, or final conclusion.
-   - `reasoning`: concrete reasoning. It must state what information is used, how it is used, and what specific intermediate conclusion is reached.
+   - `instruction`: abstract guidance only. It must describe what to do, not the specific answer, value, named source result, intermediate result, or final conclusion. It should be reusable guidance for a solver.
+   - `reasoning`: concrete reasoning. It must preserve the user's useful details: what information is used, how it is used, what expert judgment or check is applied, and what specific intermediate conclusion is reached.
    - `step_type`: a concise summary label for the nature of the step. Use a short word or phrase derived from the actual step, not a fixed taxonomy.
 
 Important:
+- Preserve raw expert detail in `reasoning`, not `instruction`.
+- If the raw user explanation contains concrete values, material facts, conclusions, examples, hidden rules, or error checks, keep them in `reasoning` when relevant.
 - If one user-written step mixes multiple bottlenecks, split it.
 - If one step both applies a domain rule and performs extraction/calculation, split those into separate reasoning units when that improves clarity.
 - Do not invent solving steps that are not supported by the user's raw process, the prompt, or the provided materials.
@@ -117,13 +144,15 @@ Good `instruction`:
 - abstract;
 - reusable as guidance;
 - does not reveal the concrete answer;
-- does not include exact values, named intermediate conclusions, or final results.
+- does not include exact values, named material facts, named intermediate conclusions, or final results;
+- may name the kind of operation, such as identify, compare, verify, calculate, prioritize, map, filter, synthesize, or decide.
 
 Good `reasoning`:
 
 - names the task information, materials, expert rule, or output evidence being used;
 - explains how the human derives the conclusion;
 - includes concrete intermediate conclusions;
+- preserves useful raw details from the expert's explanation;
 - is detailed enough for a reviewer to understand the expert's path.
 
 Good `step_type`:
