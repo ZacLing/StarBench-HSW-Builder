@@ -1,7 +1,7 @@
 interface:
   display_name: "JSG Task Miner"
-  short_description: "Mine senior-judgment AI eval tasks"
-  default_prompt: "Use $jsg-task-miner to turn my role, experience, and daily work into a large batch of Senior-Junior Gap task candidates for evaluating AI agents."
+  short_description: "Surface real senior-judgment task opportunities"
+  default_prompt: "Use $jsg-task-miner to help me recall and choose a real Senior-Junior Gap task from my work, including what materials or sanitized artifacts I can provide."
 
 policy:
   allow_implicit_invocation: true
