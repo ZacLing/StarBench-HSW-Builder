@@ -18,6 +18,16 @@ TASK_KEYS = [
     "timeout_seconds",
     "allow_web_search",
 ]
+TASK_KEYS_WITH_MATERIALS = [
+    "id",
+    "name",
+    "prompt",
+    "rubrics",
+    "human_reference",
+    "materials",
+    "timeout_seconds",
+    "allow_web_search",
+]
 RUBRIC_KEYS = ["id", "fail_fast", "expected", "question"]
 HUMAN_STEP_KEYS = ["step_id", "step_type", "instruction", "reasoning"]
 
@@ -110,7 +120,26 @@ def validate_human_reference(path: Path) -> dict[str, Any]:
     return data
 
 
-def copy_trace(run: Path, trace_dir: Path) -> None:
+def copy_task_materials(materials_src: Path, task_dir: Path) -> list[str]:
+    if not materials_src.exists():
+        return []
+    if not materials_src.is_dir():
+        raise SystemExit(f"materials path must be a directory: {materials_src}")
+    materials_dest = task_dir / "materials"
+    if materials_dest.exists():
+        shutil.rmtree(materials_dest)
+    shutil.copytree(
+        materials_src,
+        materials_dest,
+        ignore=lambda _dir, names: {name for name in names if name == ".DS_Store"},
+    )
+    files = []
+    for path in sorted(item for item in materials_dest.rglob("*") if item.is_file()):
+        files.append(path.relative_to(task_dir).as_posix())
+    return files
+
+
+def copy_trace(run: Path, trace_dir: Path, out_root: Path) -> None:
     trace_dir.mkdir(parents=True, exist_ok=True)
     for name in ("task.json",):
         src = run / name
@@ -126,7 +155,10 @@ def copy_trace(run: Path, trace_dir: Path) -> None:
             return {
                 name
                 for name in names
-                if name.startswith("final_package") or name.endswith(".zip")
+                if name == out_root.name
+                or name.startswith("final_package")
+                or name.endswith("_hsw_package")
+                or name.endswith(".zip")
             }
 
         shutil.copytree(export_src, trace_dir / "export", ignore=ignore_export)
@@ -148,6 +180,7 @@ def cmd_package(args: argparse.Namespace) -> None:
     curated = Path(args.curated_rubrics).expanduser().resolve() if args.curated_rubrics else run / "export" / "rubrics_curated.json"
     human_ref = Path(args.human_reference).expanduser().resolve() if args.human_reference else run / "export" / "human_reference.json"
     prompt_src = Path(args.prompt_file).expanduser().resolve() if args.prompt_file else run / "original" / "user_prompt.md"
+    materials_src = Path(args.materials_dir).expanduser().resolve() if args.materials_dir else run / "original" / "materials"
     if not curated.exists():
         raise SystemExit(f"missing curated rubrics: {curated}")
     if not human_ref.exists():
@@ -164,8 +197,9 @@ def cmd_package(args: argparse.Namespace) -> None:
     task_dir = out_root / "task_package"
     task_dir.mkdir(parents=True, exist_ok=True)
 
-    copy_trace(run, trace_dir)
+    copy_trace(run, trace_dir, out_root)
     shutil.copy2(prompt_src, task_dir / "prompt.md")
+    materials = copy_task_materials(materials_src, task_dir)
     write_json(task_dir / "rubrics.json", bench_rubrics(curated, int(args.limit)))
     write_json(task_dir / "human_reference.json", validate_human_reference(human_ref))
     task = {
@@ -174,10 +208,13 @@ def cmd_package(args: argparse.Namespace) -> None:
         "prompt": "prompt.md",
         "rubrics": "rubrics.json",
         "human_reference": "human_reference.json",
-        "timeout_seconds": int(args.timeout_seconds),
-        "allow_web_search": bool(args.allow_web_search),
     }
-    if list(task.keys()) != TASK_KEYS:
+    if materials:
+        task["materials"] = materials
+    task["timeout_seconds"] = int(args.timeout_seconds)
+    task["allow_web_search"] = bool(args.allow_web_search)
+    expected_task_keys = TASK_KEYS_WITH_MATERIALS if materials else TASK_KEYS
+    if list(task.keys()) != expected_task_keys:
         raise SystemExit("internal task key order mismatch")
     write_json(task_dir / "task.json", task)
 
@@ -198,6 +235,7 @@ def build_parser() -> argparse.ArgumentParser:
     package.add_argument("--curated-rubrics", default=None)
     package.add_argument("--human-reference", default=None)
     package.add_argument("--prompt-file", default=None)
+    package.add_argument("--materials-dir", default=None)
     package.add_argument("--timeout-seconds", type=int, default=1800)
     package.add_argument("--allow-web-search", type=parse_bool, default=False)
     package.add_argument("--limit", type=int, default=15)
