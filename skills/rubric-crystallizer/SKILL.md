@@ -12,6 +12,7 @@ Crystallization is not a summary of what improved from `v0` to `vN`. A rubric ma
 ## Core Rules
 
 - Generate at least 15 candidate rubrics before asking the user to rank or prune, unless the trace genuinely lacks enough objective signal.
+- Do not ask the user to simply "approve this top 15". The user must be asked to review and order the rubrics, and must be shown the allowed reply format.
 - Letter the original candidate rubrics `A`, `B`, `C`, and so on. After `Z`, continue with `AA`, `AB`, etc.
 - Write every rubric as a single yes/no question with an objective expected answer.
 - Each rubric must test one concrete point. Split multi-condition questions unless the condition is an inseparable basic compliance check.
@@ -157,7 +158,7 @@ B: 交付物是否包含题目要求的唯一输出文件路径？ [fail-fast]
 C: 交付物是否明确指出了最高风险操作步骤的回滚或缓解方案？ [make-better]
 ```
 
-Then ask the user to reorder, edit, delete, or add rubrics. The user may reply like:
+Then ask the user to reorder, edit, delete, or add rubrics. Make the expected reply format explicit. Tell the user to list rubrics in their preferred order, one per line, and to include any edits/deletions/additions/type changes in the same message. The user may reply like:
 
 ```text
 C: 交付物是否明确指出了最高风险操作步骤的回滚或缓解方案？
@@ -167,7 +168,11 @@ D: <完整 rubric 文本>
 Remove F
 Change C to: <完整修改后的 rubric 文本>
 Add: <完整新增 rubric 文本>
+Type B: make-better
+Type H: fail-fast
 ```
+
+If the user responds only with "approved", "looks good", "批准", "批准这个 top15", or similar without ranking or explicit confirmation of the current full order, do not finalize curated rubrics yet. Ask them to either provide the ordered list or explicitly say that the displayed full order should be used as-is after reviewing it.
 
 When discussing edits, protect objective yes/no judgeability. If the user proposes a subjective rubric, help tighten it into an observable question.
 
@@ -180,7 +185,7 @@ export/rubrics_original.json
 export/rubrics_original.md
 ```
 
-After the user approves ranking, edits, deletions, additions, and fail-fast labels, save:
+After the user provides an ordered review response or explicitly confirms that the displayed full order should be used as-is, and after any edits, deletions, additions, and fail-fast labels are resolved, save:
 
 ```text
 export/rubrics_curated.json
@@ -207,7 +212,7 @@ When the user changes ranking or type labels, accept domain judgment unless it b
 
 ## Handoff To Builder
 
-When the curated rubrics are approved, tell the user that `starbench-hsw-builder` should do final packaging. The builder owns the final zip and the OpenAI bench task-package export.
+When the curated rubrics have been ranked/reviewed and saved, tell the user that `starbench-hsw-builder` should do final packaging. The builder owns the final zip and the OpenAI bench task-package export.
 
 The final bench package uses only the top 15 active curated rubrics, preserving the user's ranked order. It must match the demo task schema:
 

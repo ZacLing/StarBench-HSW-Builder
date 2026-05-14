@@ -89,7 +89,7 @@ Frame the whole skill pack as a total-part-total workflow:
 builder opens and routes
 -> jsg-task-miner discovers tasks when needed
 -> expert-boost-loop records the trace
--> rubric-crystallizer turns the trace into approved rubrics
+-> rubric-crystallizer turns the trace into ranked, user-reviewed rubrics
 -> builder packages the trace and benchmark-ready task package
 ```
 
@@ -213,7 +213,7 @@ Next action:
 
 1. Confirm that the trace package exists and includes `task.json`, `original/`, `rounds/`, and `reviews/`.
 2. Switch into `rubric-crystallizer`.
-3. Have `rubric-crystallizer` produce at least 15 lettered rubrics, classify each as fail-fast or make-better, save the original set, discuss ranking/edits with the user, and save the curated set.
+3. Have `rubric-crystallizer` produce at least 15 lettered rubrics, classify each as fail-fast or make-better, save the original set, show all rubrics in full, require the user to rank/review them with the explicit format, discuss edits, and save the curated set.
 
 Use phrasing like:
 
@@ -225,16 +225,37 @@ The trace exists, so we are past trace production. I am going to use rubric-crys
 
 Use this route when the user asks to package, export, zip, submit, finish, or create the benchmark task package.
 
-Only package after the curated rubrics exist and the user has approved them. The final zip is a builder responsibility, not an `expert-boost-loop` responsibility.
+Only package after curated rubrics exist and the user has ranked/reviewed them. Do not treat "approve this top 15" as enough by itself unless the user explicitly confirms that the displayed full order should be used as-is after reviewing it. The final zip is a builder responsibility, not an `expert-boost-loop` responsibility.
 
 Before packaging, ensure:
 
 - Expert Boost trace package exists.
 - `export/rubrics_original.json` exists.
 - `export/rubrics_curated.json` exists and has at least 15 active rubrics.
-- The top 15 active curated rubrics are the user-approved order.
+- The top 15 active curated rubrics reflect the user's ordered review response, including any edits, deletions, additions, and fail-fast/make-better changes.
 - Each top rubric has `id`, `question`, `expected`, and `fail_fast`.
 - `export/human_reference.json` exists and matches the bench schema.
+
+If curated rubrics are missing, ask the user to rank/review the full rubric list before packaging. Use a prompt like:
+
+```text
+我还不能直接打最终 zip。请先对这些 rubrics 排序和审阅。
+
+请按你认为最能挑出 agent 错误的顺序回复，格式如下：
+
+C: <完整 rubric 文本>
+B: <完整 rubric 文本>
+A: <完整 rubric 文本>
+D: <完整 rubric 文本>
+Remove F
+Change C to: <完整修改后的 rubric 文本>
+Add: <完整新增 rubric 文本>
+Type B: make-better
+Type H: fail-fast
+
+如果你已经逐条看过，并且想完全沿用我展示的当前顺序，请明确说：
+使用当前完整顺序，不做修改。
+```
 
 If `human_reference.json` is missing, create it with the user from the final task understanding before packaging. It must use exactly:
 
@@ -356,7 +377,7 @@ Avoid:
 
 - Dumping all fields at once.
 - Producing rubrics before a trace exists.
-- Packaging before the user has approved curated rubrics.
+- Packaging before the user has ranked/reviewed curated rubrics.
 - Treating every user question as a command to start a run.
 - Overexplaining internal storage unless the user asks or the trace route begins.
 
@@ -368,7 +389,7 @@ Before routing to `expert-boost-loop`, make sure there is at least a rough task 
 
 Before routing to `rubric-crystallizer`, make sure a trace package already exists. If the user only has a task idea, route to `expert-boost-loop` first.
 
-Before final packaging, make sure curated rubrics and human reference files exist. If they do not, use `rubric-crystallizer` or create the human reference with the user before running the packaging script.
+Before final packaging, make sure curated rubrics and human reference files exist. If curated rubrics do not exist, use `rubric-crystallizer` and require the user to rank/review the full rubric list first. If the human reference does not exist, create it with the user before running the packaging script.
 
 When switching skills, say it plainly:
 
