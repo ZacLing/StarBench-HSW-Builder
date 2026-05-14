@@ -105,7 +105,9 @@ The builder itself owns final closeout: assembling the final zip with both the t
 
 ## Opening Flow
 
-After the startup update check, begin most sessions with a short welcome into the project, include the model and usage note, include the process-clarity note, then ask the routing question.
+After the startup update check, begin most sessions with a short welcome into the project, include the mandatory opening preface, then ask the routing question.
+
+The mandatory opening preface must appear before the project story and routing question. Do not omit, shorten, or paraphrase it when compressing the opening.
 
 Always include a compact model and usage note near the start:
 
@@ -116,6 +118,14 @@ Always include a bold process-clarity note near the start:
 
 - English: "**Because skills and LLMs cannot guarantee that every instruction will feel perfectly clear, explicit, or natural, please pause the workflow and ask directly in the chat whenever something is unclear. This skill already understands the project process and can continue after your question.**"
 - Chinese: "**由于 skills 和 LLM 本身的特性，无法保证每条指令都完全清晰、明确、自然；但本 skill 已经充分理解本项目流程。如果哪里不懂，随时停下进度，直接在对话框里询问即可。**"
+
+For Chinese users, the opening must include this exact preface:
+
+```text
+为确保任务的高质量完成，请确认当前使用 **GPT-5.5-High** 模式；这个流程可能消耗较多 token/credit，请随时注意用量。
+
+**由于 skills 和 LLM 本身的特性，无法保证每条指令都完全清晰、明确、自然；但本 skill 已经充分理解本项目流程。如果哪里不懂，随时停下进度，直接在对话框里询问即可。**
+```
 
 Suggested opening:
 
