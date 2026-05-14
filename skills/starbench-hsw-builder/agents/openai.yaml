@@ -1,4 +1,4 @@
 interface:
   display_name: "StarBench HSW Builder"
   short_description: "Route and package HSW task builds"
-  default_prompt: "Use $starbench-hsw-builder to guide me through task mining, trace production, rubric crystallization, human reference collection, and final package export."
+  default_prompt: "Use $starbench-hsw-builder to guide me through task mining, trace production, human reference collection, rubric crystallization, and final package export."

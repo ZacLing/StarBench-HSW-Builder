@@ -1,6 +1,6 @@
 ---
 name: starbench-hsw-builder
-description: Onboard, route, and close out StarBench-HSW (Humans-Still-Win) task building. Use when the user wants an introduction, FAQ-style help, startup update check, or guided entry into task mining, trace production, rubric crystallization, human reference collection, or final zip packaging; when deciding whether to use jsg-task-miner, expert-boost-loop, rubric-crystallizer, or human-reference-collector; or when exporting the final bundle with a trace record and OpenAI-bench-compatible task package.
+description: Onboard, route, and close out StarBench-HSW (Humans-Still-Win) task building. Use when the user wants an introduction, FAQ-style help, startup update check, or guided entry into task mining, trace production, human reference collection, rubric crystallization, or final zip packaging; when deciding whether to use jsg-task-miner, expert-boost-loop, human-reference-collector, or rubric-crystallizer; or when exporting the final bundle with a trace record and OpenAI-bench-compatible task package.
 ---
 
 # StarBench-HSW Builder
@@ -92,8 +92,8 @@ Frame the whole skill pack as a total-part-total workflow:
 builder opens and helps choose the path
 -> jsg-task-miner helps find a real task when needed
 -> expert-boost-loop records the task, outputs, and expert feedback
--> rubric-crystallizer turns the feedback into ranked yes/no checks
 -> human-reference-collector records how the human expert would solve it
+-> rubric-crystallizer turns the feedback and any new expert notes into ranked yes/no checks
 -> builder packages everything into the final task bundle
 ```
 
@@ -103,8 +103,8 @@ Present the active downstream skills simply:
 
 - `jsg-task-miner`: for users who do not yet have a strong task idea. It interviews the expert about their role, daily work, review memories, hidden constraints, and judgment forks, then helps them surface a real task opportunity with concrete or safely sanitized materials.
 - `expert-boost-loop`: for users who already have a task idea, prompt, or materials. It records the task, runs output rounds, saves expert feedback, and keeps a trace, meaning the full history of how the task improved.
-- `rubric-crystallizer`: for users who already have a completed trace and want to turn expert feedback into ranked yes/no checks, called rubrics.
-- `human-reference-collector`: for users who already have reviewed rubrics and need to record how the human expert would solve the task step by step before final packaging.
+- `human-reference-collector`: for users who already have a completed trace and need to record how the human expert would solve the task step by step. This usually comes before rubrics, because thinking through the human solution often reveals extra places where agents fail.
+- `rubric-crystallizer`: for users who already have a completed trace, preferably with human reference notes collected, and want to turn expert feedback plus any new expert notes into ranked yes/no checks, called rubrics.
 
 The builder itself owns the final closeout: assembling the final zip with the saved process record and the benchmark task package.
 
@@ -233,40 +233,47 @@ Use this route when the user asks conceptual questions:
 Answer directly and compactly. Then offer the fork:
 
 ```text
-At the start, we usually choose between two paths: find a real task from your work, or record the process for an existing task. Later, after that record exists, we turn the feedback into checks, collect how you would solve it, and package the final task.
+At the start, we usually choose between two paths: find a real task from your work, or record the process for an existing task. Later, after that record exists, we collect how you would solve it, turn the feedback and extra notes into checks, and package the final task.
 ```
 
-### Route D: User Has A Completed Trace And Wants Rubrics
+### Route D: User Has A Completed Trace And Wants Rubrics Or Finalization
 
 Use this route when the user provides an Expert Boost package path, asks for rubrics, mentions crystallization, or wants to convert weaknesses and deliverables into evaluation criteria.
 
 Next action:
 
 1. Confirm that the trace package exists and includes `task.json`, `original/`, `rounds/`, and `reviews/`.
-2. Switch into `rubric-crystallizer`.
-3. Have `rubric-crystallizer` produce at least 15 lettered rubrics, classify each as fail-fast or make-better, save the original set, show all rubrics in full, require the user to rank/review them with the explicit format, discuss edits, and save the curated set.
-4. After curated rubrics are saved, switch into `human-reference-collector` before final packaging.
+2. If `export/human_reference.json` is missing, switch into `human-reference-collector` first. Ask the user how they would solve the task themselves, save the raw explanation, structure it into `human_reference.json`, and collect any extra agent-failure notes they notice during that reflection.
+3. After human reference exists, switch into `rubric-crystallizer`.
+4. Have `rubric-crystallizer` produce at least 15 lettered rubrics from accepted weaknesses, hidden-rule rationales, deliverable evidence, and any extra human-reference notes that can be made objective. Classify each as fail-fast or make-better, save the original set, show all rubrics in full, require the user to rank/review them with the explicit format, discuss edits, and save the curated set.
 
 Use phrasing like:
 
 ```text
-The task process has been recorded, so the next step is to turn your feedback into objective yes/no checks. I am going to use rubric-crystallizer for that.
+The task process has been recorded. Before we write rubrics, I want to capture how you would solve it yourself, because that often surfaces extra expert points. I am going to use human-reference-collector first.
 ```
 
-### Route E: User Has Curated Rubrics And Needs Human Reference
+If `human_reference.json` already exists, use phrasing like:
 
-Use this route when curated rubrics exist and the user needs `human_reference.json`, asks for human reference collection, or is moving from rubrics toward final packaging.
+```text
+Your own solution process is already saved, so now we can turn the recorded feedback and extra expert notes into objective yes/no checks. I am going to use rubric-crystallizer for that.
+```
+
+### Route E: User Needs Human Reference
+
+Use this route when the user asks for human reference collection, asks to record how an expert would solve the task, or has a completed trace with `export/human_reference.json` missing.
 
 Next action:
 
-1. Confirm `export/rubrics_curated.json` exists.
+1. Confirm the trace package exists.
 2. Switch into `human-reference-collector`.
-3. Ask the user for their own step-by-step solution process with a clear `Step 1 / Step 2 / ... / Step n` or `步骤1 / 步骤2 / ... / 步骤n` response format, save the raw notes, structure the steps, run the independent judge pass, and save `export/human_reference.json`.
+3. Ask the user for their own step-by-step solution process with a clear `Step 1 / Step 2 / ... / Step n` or `步骤1 / 步骤2 / ... / 步骤n` response format, save the raw notes, structure the steps, run the independent judge pass, save `export/human_reference.json`, and then ask whether this self-solution process made them notice any additional agent mistakes or should-do points.
+4. Save those extra notes as rubric signal, then move to `rubric-crystallizer` unless the user pauses.
 
 Use phrasing like:
 
 ```text
-The reviewed checks are ready. Before packaging, I am going to use human-reference-collector to capture how you would solve the task yourself and save that as `human_reference.json`.
+Next I am going to use human-reference-collector to capture how you would solve the task yourself. After that, we can use what you noticed there as extra input for rubrics.
 ```
 
 ### Route F: User Wants Final Packaging
@@ -281,13 +288,28 @@ Before packaging, ensure:
 - `original/user_prompt.md` is the clean benchmark prompt, not the raw chat transcript.
 - `original/materials/` contains the task materials when the task depends on attachments or source documents.
 - Any removed intake scaffolding is saved under `audit/`, outside the benchmark `task_package/`.
+- `export/human_reference.json` exists and matches the bench schema.
 - `export/rubrics_original.json` exists.
 - `export/rubrics_curated.json` exists and has at least 15 active rubrics.
 - The top 15 active curated rubrics reflect the user's ordered review response, including any edits, deletions, additions, and fail-fast/make-better changes.
 - Each top rubric has `id`, `question`, `expected`, and `fail_fast`.
-- `export/human_reference.json` exists and matches the bench schema.
 
-If curated rubrics are missing, ask the user to rank/review the full rubric list before packaging. Phrase it as a normal review step, not a system blocker. Use a prompt like:
+If `human_reference.json` is missing, switch into `human-reference-collector` before rubric crystallization or final packaging. Do not invent the human reference locally from final task understanding alone; it should be grounded in the user's own step-by-step solution process. The final file must use exactly:
+
+```json
+{
+  "steps": [
+    {
+      "step_id": "H001",
+      "step_type": "structure",
+      "instruction": "...",
+      "reasoning": "..."
+    }
+  ]
+}
+```
+
+If curated rubrics are missing, use `rubric-crystallizer` after human reference exists, then ask the user to rank/review the full rubric list before packaging. Phrase it as a normal review step, not a system blocker. Use a prompt like:
 
 ```text
 我还不能直接打最终 zip。还差一步：请先对这些 rubrics 做排序和审阅。
@@ -306,21 +328,6 @@ Type H: fail-fast
 
 如果你已经逐条看过，并且想完全沿用我展示的当前顺序，请明确说：
 使用当前完整顺序，不做修改。
-```
-
-If `human_reference.json` is missing, switch into `human-reference-collector` before packaging. Do not invent the human reference locally from final task understanding alone; it should be grounded in the user's own step-by-step solution process. The final file must use exactly:
-
-```json
-{
-  "steps": [
-    {
-      "step_id": "H001",
-      "step_type": "structure",
-      "instruction": "...",
-      "reasoning": "..."
-    }
-  ]
-}
 ```
 
 Then use the packaging helper:
@@ -411,13 +418,13 @@ Trace matters because it shows the gap between a plausible first answer and what
 
 ### What Is Crystallization
 
-Crystallization means turning the saved process and expert feedback into objective yes/no checks. The goal is not to summarize the final answer. The goal is to find concrete checks that catch ways agents fail the task, using accepted weaknesses, unresolved expert concerns, hidden senior rules, and deliverable evidence.
+Crystallization means turning the saved process and expert feedback into objective yes/no checks. The goal is not to summarize the final answer. The goal is to find concrete checks that catch ways agents fail the task, using accepted weaknesses, unresolved expert concerns, hidden senior rules, deliverable evidence, and any extra points the expert noticed while explaining how they would solve the task.
 
 Rubrics can describe points the final deliverable still fails, as long as they are objective and grounded in the trace.
 
 ### What Is Human Reference Collection
 
-Human reference collection records how the expert user would solve the task themselves. The user's raw explanation is saved, then organized into step-by-step `human_reference.json` for the final task package. The user does not need to write schema fields; the skill structures and checks them.
+Human reference collection records how the expert user would solve the task themselves. It happens before rubrics in the normal flow, because walking through the expert's own solution often brings out extra agent mistakes or hidden requirements. The user's raw explanation is saved, then organized into step-by-step `human_reference.json` for the final task package. The user does not need to write schema fields; the skill structures and checks them.
 
 ### Why Start With Task Mining
 
@@ -463,11 +470,11 @@ Before routing to `jsg-task-miner`, make sure the user does not already have a c
 
 Before routing to `expert-boost-loop`, make sure there is at least a rough task idea. If the idea is too vague, ask one or two clarifying questions; if it remains vague, route to `jsg-task-miner`.
 
-Before routing to `rubric-crystallizer`, make sure a trace package already exists. If the user only has a task idea, route to `expert-boost-loop` first.
+Before routing to `human-reference-collector`, make sure a trace package already exists. If the user only has a task idea, route to `expert-boost-loop` first.
 
-Before routing to `human-reference-collector`, make sure curated rubrics exist. If curated rubrics do not exist, use `rubric-crystallizer` first.
+Before routing to `rubric-crystallizer`, make sure a trace package already exists and prefer having `export/human_reference.json` already saved. If the human reference is missing, use `human-reference-collector` first, because the expert's own solution process can reveal extra rubric material.
 
-Before final packaging, make sure curated rubrics and human reference files exist. If curated rubrics do not exist, use `rubric-crystallizer` and require the user to rank/review the full rubric list first. If the human reference does not exist, use `human-reference-collector` before running the packaging script.
+Before final packaging, make sure human reference and curated rubrics files exist. If the human reference does not exist, use `human-reference-collector` first. If curated rubrics do not exist, use `rubric-crystallizer` after that and require the user to rank/review the full rubric list before packaging.
 
 When switching skills, say it plainly:
 
@@ -484,13 +491,13 @@ I am going to use expert-boost-loop now because you already have a task, and we 
 or:
 
 ```text
-I am going to use rubric-crystallizer now because the task process has been recorded, and we can turn your feedback into ranked yes/no checks.
+I am going to use human-reference-collector now because the task process has been recorded, and we should capture how you would solve it yourself before writing rubrics.
 ```
 
 or:
 
 ```text
-I am going to use human-reference-collector now because the checks are ready, and we need your own step-by-step solution process before packaging.
+I am going to use rubric-crystallizer now because your own solution process is saved, and we can turn the feedback plus any extra expert notes into ranked yes/no checks.
 ```
 
 Do not claim a trace has been recorded until `expert-boost-loop` actually creates the files.

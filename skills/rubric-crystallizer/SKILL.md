@@ -1,11 +1,11 @@
 ---
 name: rubric-crystallizer
-description: Convert a completed Expert Boost trace into objective yes/no evaluation rubrics. Use after expert-boost-loop has produced a trace and the user wants to crystallize accepted weaknesses, unresolved expert concerns, hidden senior rules, and deliverable evidence into at least 15 lettered rubrics, discuss ranking and edits with the user, classify each rubric as fail-fast or make-better, and save both original and curated rubric sets.
+description: Convert a completed Expert Boost trace and any collected human-reference follow-up notes into objective yes/no evaluation rubrics. Use after expert-boost-loop has produced a trace, preferably after human-reference-collector has captured the user's own solution process, and the user wants to crystallize accepted weaknesses, unresolved expert concerns, hidden senior rules, human-reference insights, and deliverable evidence into at least 15 lettered rubrics, discuss ranking and edits with the user, classify each rubric as fail-fast or make-better, and save both original and curated rubric sets.
 ---
 
 # Rubric Crystallizer
 
-Use this skill after an `expert-boost-loop` trace exists. The purpose is to turn the trace into objective benchmark rubrics that catch agent failure modes.
+Use this skill after an `expert-boost-loop` trace exists. In the normal HSW flow, `human-reference-collector` should run first so the user's own solution process can surface additional expert signals before rubric generation. The purpose is to turn the trace and any human-reference follow-up notes into objective benchmark rubrics that catch agent failure modes.
 
 Crystallization is not a summary of what improved from `v0` to `vN`. A rubric may describe a concern that remains unfixed in the final deliverable. The test is whether the point is objective, task-grounded, yes/no evaluable, and useful for identifying agents that would fail this task.
 
@@ -18,6 +18,7 @@ Crystallization is not a summary of what improved from `v0` to `vN`. A rubric ma
 - Each rubric must test one concrete point. Split multi-condition questions unless the condition is an inseparable basic compliance check.
 - Do not require the final deliverable to pass the rubric. Unresolved expert concerns can become strong rubrics.
 - Use accepted weaknesses and accepted hidden-rule rationales as the primary signal.
+- Use `export/human_reference_rubric_notes_raw.md`, when present, as supplemental expert signal. These notes may produce rubrics only when they satisfy the same objective, task-grounded, yes/no evaluable standard.
 - Use adjacent deliverable changes and `v0` versus final comparisons as supporting evidence, not as the main eligibility rule.
 - Drop or quarantine subjective, vague, unsupported, or non-evaluable feedback instead of forcing it into a rubric.
 - Classify every rubric as `fail_fast` or make-better and explain the classification to the user. Let the user change the type.
@@ -60,6 +61,9 @@ rounds/*/outputs/
 rounds/*/manifest.json
 reviews/*/review.json
 reviews/*/raw_user_input.md
+export/human_reference_raw.md
+export/human_reference.json
+export/human_reference_rubric_notes_raw.md
 export/
 ```
 
@@ -75,6 +79,8 @@ Inspect the package and summarize:
 - all rounds and output directories;
 - accepted weaknesses and quality issues;
 - hidden-rule rationales admitted during review;
+- human reference summary, if available;
+- any extra rubric-signal notes produced after the human reference step;
 - final output path;
 - any unresolved risks already recorded.
 
@@ -91,6 +97,15 @@ Treat accepted weaknesses as the main source. For each weakness, identify:
 - whether the signal is objective, subjective, unsupported, too broad, or duplicate.
 
 Also scan for repeated patterns across weaknesses, such as missing risk framing, wrong stakeholder objective, unsafe data handling, weak evidence checks, or failure to clarify ambiguity.
+
+Then read `export/human_reference_rubric_notes_raw.md` if it exists. Treat it like expert feedback produced after the user mentally solved the task themselves:
+
+- identify any new agent failure, likely misunderstanding, should-do point, or hidden requirement;
+- check whether the point is grounded in the original task, materials, accepted review context, or the human reference solution process;
+- convert it into candidate rubrics only if it can become objective yes/no evaluation;
+- quarantine points that are subjective, too broad, unsupported, or merely process narration.
+
+Do not force every human-reference note into a rubric.
 
 ### 3. Use Deliverables As Evidence
 
@@ -120,6 +135,7 @@ Each candidate should have this rich internal shape:
   "source_evidence": {
     "prompt_or_materials": [],
     "reviews": [],
+    "human_reference": [],
     "deliverables": []
   },
   "v0_status": "fail|pass|unclear|not_checked",
@@ -210,9 +226,9 @@ Keep the first presentation structured but complete: show every generated rubric
 
 When the user changes ranking or type labels, accept domain judgment unless it breaks objective evaluation. If it does break evaluation, explain the issue and offer a tighter wording.
 
-## Handoff To Human Reference
+## Handoff To Builder
 
-When the curated rubrics have been ranked/reviewed and saved, tell the user that `human-reference-collector` should collect the expert's own step-by-step solution process next. After `export/human_reference.json` exists, `starbench-hsw-builder` owns the final zip and the OpenAI bench task-package export.
+When the curated rubrics have been ranked/reviewed and saved, tell the user that `starbench-hsw-builder` can do final packaging if `export/human_reference.json` already exists. If the human reference file is missing, use `human-reference-collector` before packaging.
 
 The final bench package uses only the top 15 active curated rubrics, preserving the user's ranked order. It must match the demo task schema:
 

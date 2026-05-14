@@ -19,7 +19,6 @@ Expect explicit paths to:
 original/user_prompt.md
 original/materials_manifest.json
 original/materials/
-export/rubrics_curated.json
 export/human_reference_raw.md
 export/human_reference_draft.json
 ```

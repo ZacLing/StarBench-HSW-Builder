@@ -1,4 +1,4 @@
 interface:
   display_name: "Rubric Crystallizer"
   short_description: "Crystallize trace feedback into rubrics"
-  default_prompt: "Use $rubric-crystallizer to turn a completed Expert Boost trace into objective yes/no rubrics, then help me rank and refine them."
+  default_prompt: "Use $rubric-crystallizer to turn a completed Expert Boost trace and any human-reference follow-up notes into objective yes/no rubrics, then help me rank and refine them."

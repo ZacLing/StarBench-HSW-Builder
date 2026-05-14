@@ -1,13 +1,13 @@
 ---
 name: human-reference-collector
-description: Collect, preserve, structure, judge, and save human reference solution steps after rubrics have been curated and before final StarBench-HSW packaging. Use when a completed Expert Boost trace already has curated rubrics and the project needs the user's own step-by-step solution process converted into an OpenAI-bench-compatible `human_reference.json`, while also saving the raw user explanation into the trace.
+description: Collect, preserve, structure, judge, and save human reference solution steps after an Expert Boost trace has been produced and before rubric crystallization. Use when a completed trace needs the user's own step-by-step solution process converted into an OpenAI-bench-compatible `human_reference.json`, and when the project should ask the user whether that self-solution process reveals additional agent failures or should-do points that may later become rubrics.
 ---
 
 # Human Reference Collector
 
 ## Purpose
 
-Use this skill after `rubric-crystallizer` has saved curated rubrics and before `starbench-hsw-builder` creates the final zip.
+Use this skill after `expert-boost-loop` has produced a trace and before `rubric-crystallizer` generates rubrics.
 
 The goal is to collect how the human expert would solve the task themselves, preserve that raw explanation, then convert it into a structured `human_reference.json` that matches the benchmark task package schema.
 
@@ -28,7 +28,8 @@ The collection posture matters: guide the expert to mentally replay how they wou
 - `step_type` is a concise summarized label for the step. It is not limited to a fixed taxonomy.
 - Run one independent judge pass using `human-reference-judge` in a fresh no-context subagent when subagents are available.
 - Revise once from judge feedback, then save the final reference.
-- Do not package the final zip here. Hand off to `starbench-hsw-builder` after saving `export/human_reference.json`.
+- After saving the human reference, ask one follow-up question about any additional agent failures or should-do points the user realized while thinking through their own solution. Save that raw text for `rubric-crystallizer`.
+- Do not package the final zip here. Hand off to `rubric-crystallizer` after saving `export/human_reference.json` and any additional notes.
 
 ## Files
 
@@ -41,11 +42,14 @@ export/human_reference_judge.json
 export/human_reference_revision_notes.md
 export/human_reference.json
 export/human_reference.md
+export/human_reference_rubric_notes_raw.md
 ```
 
 `human_reference_raw.md` is trace evidence. It may be copied into final zip `trace/export/`, but it must not be referenced by `task_package/task.json`.
 
 `human_reference.json` is the benchmark file that `starbench-hsw-builder` copies into `task_package/human_reference.json`.
+
+`human_reference_rubric_notes_raw.md` is optional supplemental expert signal for `rubric-crystallizer`. It records any new concerns the user notices after mentally solving the task themselves. These notes are not automatically rubrics; `rubric-crystallizer` decides whether each point can become an objective yes/no check.
 
 ## Expert Elicitation
 
@@ -196,7 +200,6 @@ Do not pass the current conversation. Give only:
 - `original/user_prompt.md`;
 - `original/materials_manifest.json`;
 - `original/materials/` if present;
-- `export/rubrics_curated.json`;
 - `export/human_reference_raw.md`;
 - `export/human_reference_draft.json`;
 - the desired output language.
@@ -214,6 +217,34 @@ export/human_reference_revision_notes.md
 ```
 
 If subagents are unavailable, do a local self-check, save the notes, and explicitly record that judge review was skipped.
+
+## Follow-Up For Rubric Signals
+
+After the final `human_reference.json` is saved, ask one short follow-up question in the user's language:
+
+Chinese style:
+
+```text
+刚刚你按自己的方式想了一遍怎么解决这个 task。结合这个过程，你有没有又想到哪些 agent 没做好、容易误判、或者其实应该做到的地方？
+
+可以直接列点写。这里不需要强行写成 rubric，也不需要保证每一点都能转换；我后面会按 rubric 的原则判断，能变成客观 yes/no 检查的就尝试整理，不能转换的就保留为参考。
+```
+
+English style:
+
+```text
+Now that you have walked through how you would solve the task yourself, did that make you think of any additional places where an agent failed, might misunderstand, or should do something important?
+
+You can list them casually. You do not need to write rubrics, and not every point has to become one. Later, rubric-crystallizer will apply the rubric rules and convert only the points that can become objective yes/no checks.
+```
+
+Save the raw response exactly as:
+
+```text
+export/human_reference_rubric_notes_raw.md
+```
+
+If the user has no additional points, save a short note saying so. Then hand off to `rubric-crystallizer`.
 
 ## Final Save
 
@@ -240,4 +271,4 @@ The final JSON must be:
 }
 ```
 
-After saving, tell the user that `starbench-hsw-builder` can now create the final zip.
+After saving, tell the user that the next step is `rubric-crystallizer`, which will turn trace feedback plus any new human-reference notes into objective yes/no rubrics where possible.
