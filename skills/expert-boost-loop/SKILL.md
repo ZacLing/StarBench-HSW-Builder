@@ -14,6 +14,7 @@ Use this skill to run a lightweight StarBoost-style improvement harness inside a
 - Save the user's original task prompt exactly before acting on it.
 - Save accepted review-like user messages exactly before sending them into the formal trace.
 - If comments are too vague, subjective, or unactionable, ask the user to revise before creating the formal review record.
+- If a weakness introduces facts, requirements, or hidden rules beyond the original prompt and materials, require a plausible user rationale before accepting it.
 - After each executor output, show the user a comments template before asking for review.
 - Require the two review scores in every round: latest deliverable satisfaction and alignment against the user's own expected score.
 - Main Codex judges both weakness quality and minimum useful weakness count for each round; do not use a purely mechanical round number rule.
@@ -83,11 +84,34 @@ Main Codex hosts the review loop. The goal is not to maximize the number of roun
 
 Use judgment, not a rigid formula. Gate comments in this order:
 
-1. **Quality gate**: are the proposed weaknesses objective, concrete, clear, and actionable enough to guide the next executor?
-2. **Quantity gate**: after low-quality weaknesses are excluded, are there enough useful weaknesses for this round?
-3. **Continuation gate**: given task difficulty, scores, comments, and remaining leverage, should another executor round run?
+1. **Scope and hidden-rule gate**: are the proposed weaknesses grounded in the original prompt, provided materials, current deliverable, or a plausibly explained senior/domain rule?
+2. **Quality gate**: are the proposed weaknesses objective, concrete, clear, and actionable enough to guide the next executor?
+3. **Quantity gate**: after low-quality weaknesses are excluded, are there enough useful weaknesses for this round?
+4. **Continuation gate**: given task difficulty, scores, comments, and remaining leverage, should another executor round run?
 
-The quality gate comes first. A review with five vague weaknesses is worse than a review with two precise, high-leverage weaknesses.
+The scope gate comes first. A review with five precise-looking weaknesses is not usable if they smuggle in unsupported external requirements that the executor cannot justify from the task package.
+
+### Scope And Hidden-Rule Gate
+
+Before accepting review feedback, compare each weakness against the known task boundary:
+
+- the original user prompt;
+- the provided materials and their manifest;
+- the current deliverable under review;
+- prior accepted review weaknesses, if they were already admitted into the trace.
+
+Use a low tolerance for unsupported external claims. A weakness is suspect when it:
+
+- adds a new factual claim, requirement, constraint, target audience, policy, standard, metric, market assumption, or evaluation criterion that does not appear in the original prompt or materials;
+- contradicts the original prompt, materials, or an already accepted task constraint;
+- depends on a hidden industry rule, senior norm, or domain convention that is not obvious from the task package;
+- asks the next executor to optimize for a goal that a fresh executor could not infer from the allowed context.
+
+If the new claim is a plausible hidden senior/domain rule, do not reject it outright. Ask the user for a brief rationale explaining why the rule applies to this task. Accept it only if the explanation is self-consistent, compatible with the original prompt and materials, and specific enough for a fresh executor to apply. Record both the original feedback and the user's rationale verbatim when the review is accepted.
+
+If the claim clearly conflicts with the original prompt or materials, or the hidden rule is too far outside the known task context to evaluate safely, reject that weakness and ask for the user's reason. If the user cannot give a coherent reason, continues to rely only on authority, or simply insists without explaining the domain logic, keep rejecting that weakness and do not pass it to the executor. User insistence alone is not enough to force this gate.
+
+When only some weaknesses fail this gate, accept the grounded ones and ask the user to revise or justify the out-of-scope ones before they can enter the formal trace.
 
 ### Weakness Quality Standard
 
@@ -98,6 +122,7 @@ Judge weaknesses like serious OpenReview-style or academic reviewer comments. A 
 - be grounded in the current deliverable, task prompt, or provided materials rather than personal taste alone;
 - be specific enough that a fresh executor can act on it without seeing the host conversation;
 - avoid hidden answer leakage while still naming the substantive issue;
+- include a rationale when it relies on an unstated senior/domain convention;
 - be distinct from other weaknesses.
 
 Poor weaknesses include:
@@ -108,6 +133,7 @@ Poor weaknesses include:
 - "missing details" without naming which details or where;
 - duplicated comments with different wording;
 - preferences that contradict the original task or provided materials.
+- hidden-rule claims that are not justified when asked for a reason.
 
 If comments do not pass this quality standard, do not create the formal `review.json` yet and do not launch the executor. Ask the user to revise, giving brief rewrite suggestions. Example:
 
@@ -295,19 +321,20 @@ Instructions:
 
 When the user provides strengths, weaknesses, scores, comments, or any review-like feedback:
 
-1. First apply the Weakness Quality Standard. If the comments are too subjective, vague, duplicated, or unactionable, do not create the formal review record yet. Ask the user to revise and give one or two concrete rewrite suggestions.
-2. Once the review passes the quality gate, or the user strongly insists on continuing, save it verbatim:
+1. First apply the Scope And Hidden-Rule Gate, then the Weakness Quality Standard. If a weakness introduces facts, constraints, requirements, or hidden senior/domain rules beyond the original prompt and materials, ask the user for a brief reason before accepting it. If the explanation is coherent and compatible with the task package, accept it and record both the original feedback and the rationale verbatim. If the user cannot justify it, keep rejecting that weakness and do not pass it to the executor.
+2. If the comments are too subjective, vague, duplicated, or unactionable, do not create the formal review record yet. Ask the user to revise and give one or two concrete rewrite suggestions.
+3. Once the review passes the scope and quality gates, or the user strongly insists on continuing past a non-scope quality or quantity issue, save it verbatim:
 
 ```bash
 python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py record-review --run <task_package_dir> --round-under-review <latest_round_id> --raw-file <verbatim_review_file> --min-strengths <min_strengths> --min-weaknesses <min_weaknesses> --quality-decision <accepted|forced> --host-decision <request_more|continue|terminate>
 ```
 
-3. Parse strengths, weaknesses, scores, and notes conservatively from the raw text.
-4. If the user did not use the template headings, still save the raw text exactly, then pass host-parsed fields through `--strength`, `--weakness`, `--satisfaction`, `--aligns-user-score`, and `--notes` so `review.json` is structured without altering the raw text.
-5. Update `review.json` with parsed `strengths`, `weaknesses`, `scores`, `notes`, validation, quality decision, and the host decision while keeping `raw_text` unchanged.
-6. If the review passes quality but does not meet the current quantity or score gate, preserve it first, then ask for the missing concrete weaknesses or scores. Do not launch the executor yet.
-7. If weaknesses are ambiguous after formal recording, ask a concise clarification before launching the executor.
-8. If the user strongly insists on continuing despite an unmet quality or quantity gate, record with `--forced-by-user --quality-decision forced --host-decision continue`, then proceed using only actionable parsed weaknesses.
+4. Parse strengths, weaknesses, scores, and notes conservatively from the raw text.
+5. If the user did not use the template headings, still save the raw text exactly, then pass host-parsed fields through `--strength`, `--weakness`, `--satisfaction`, `--aligns-user-score`, and `--notes` so `review.json` is structured without altering the raw text.
+6. Update `review.json` with parsed `strengths`, `weaknesses`, `scores`, `notes`, validation, quality decision, and the host decision while keeping `raw_text` unchanged. Use `--quality-issue` for any admitted hidden-rule or scope concerns that were resolved by rationale.
+7. If the review passes quality but does not meet the current quantity or score gate, preserve it first, then ask for the missing concrete weaknesses or scores. Do not launch the executor yet.
+8. If weaknesses are ambiguous after formal recording, ask a concise clarification before launching the executor.
+9. If the user strongly insists on continuing despite an unmet non-scope quality or quantity gate, record with `--forced-by-user --quality-decision forced --host-decision continue`, then proceed using only actionable parsed weaknesses. Do not use forced continuation to pass unsupported out-of-scope or hidden-rule claims.
 
 Never summarize instead of saving the raw user review once it is accepted into the formal trace.
 

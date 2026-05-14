@@ -242,6 +242,7 @@ def cmd_review_template(args: argparse.Namespace) -> None:
 > If you believe no useful weaknesses remain, say so clearly and use the scores below.
 > Good weaknesses are objective, specific, clear, and grounded in the deliverable or task materials.
 > Avoid vague comments like "make it better", "too shallow", or "bad tone" unless you name the concrete issue and why it matters.
+> If a weakness relies on an unstated industry rule, senior convention, or external constraint, include a short reason why that rule applies to this task.
 
 {weaknesses}
 
