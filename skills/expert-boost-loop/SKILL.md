@@ -1,6 +1,6 @@
 ---
 name: expert-boost-loop
-description: StarBoost-style expert-in-the-loop iteration for Codex conversations with an explicit user-chosen task package location and a fresh isolated executor subagent for every output round. Use when a user provides an initial task prompt and materials, wants Codex to create a complete output package, then repeatedly records human strengths and weaknesses verbatim and regenerates full improved packages using only the weaknesses as revision targets with an auditable local history.
+description: StarBoost-style expert-in-the-loop iteration for Codex conversations with an explicit user-chosen task package location, fresh isolated executor subagents for every output round, and host-Codex review governance. Use when a user provides an initial task prompt and materials, wants Codex to create a complete output package, then repeatedly records human comments, scores, strengths, and weaknesses verbatim, gates whether comments contain enough expert signal, and regenerates full improved packages using only accepted weaknesses as revision targets with an auditable local history.
 ---
 
 # Expert Boost Loop
@@ -13,6 +13,9 @@ Use this skill to run a lightweight StarBoost-style improvement harness inside a
 - Main Codex orchestrates the run; a fresh executor subagent produces each cold-start or boosted output package.
 - Save the user's original task prompt exactly before acting on it.
 - Save every review-like user message exactly before interpreting it.
+- After each executor output, show the user a comments template before asking for review.
+- Require the two review scores in every round: latest deliverable satisfaction and alignment against the user's own expected score.
+- Main Codex judges the minimum useful weakness count for each round; do not use a purely mechanical round number rule.
 - Produce complete output packages for every round, never only patches.
 - Feed only the latest parsed weaknesses into the next revision round.
 - Do not feed strengths, scores, hidden notes, private reasoning, rubrics, or inferred references into the next round.
@@ -72,6 +75,70 @@ Give it:
 - The exact output directory
 - The instruction to write a complete deliverable package under that output directory
 ```
+
+## Review Governance
+
+Main Codex hosts the review loop. The goal is not to maximize the number of rounds; it is to collect enough expert signal for the next executor to make a meaningful improvement, and to stop when additional review is unlikely to add value.
+
+Use judgment, not a rigid formula. Decide the minimum weakness count for the current round from:
+
+- **Task difficulty**: harder, more expert-heavy, or more ambiguous tasks need more weaknesses, especially in early rounds.
+- **Round maturity**: first and second reviews usually need more concrete weaknesses; later rounds may need fewer.
+- **User satisfaction language**: comments like "basically good", "acceptable", "only small issues", or "I am satisfied" lower the minimum; comments like "still far", "not usable", or "misses the point" raise it.
+- **Two scores**:
+  - `Latest Deliverables Satisfaction` is `1-5`, where `5` means very satisfied.
+  - `Latest Deliverables Aligns User Scores` is `1-10`, where `5` means about the user's own expected performance on this task.
+- **Weakness specificity**: one precise, high-leverage weakness can be worth more than several vague complaints.
+- **Remaining leverage**: if the user is repeating prior feedback, only naming polish, or cannot identify actionable weaknesses despite high scores, the loop may be ready to terminate.
+
+Default starting points:
+
+- Easy task: ask for at least `2-3` weaknesses in the first review.
+- Medium task: ask for at least `3-5` weaknesses in the first review.
+- Hard or highly expert task: ask for at least `5-7` weaknesses in the first review.
+- Strengths are lenient: usually ask for `0-1`; ask for more only when useful for audit context.
+
+Adjust from there. High satisfaction (`4-5/5`) and high alignment (`8-10/10`) can reduce the next minimum to `0-1`. Low satisfaction (`1-2/5`) or low alignment (`1-4/10`) should usually require several actionable weaknesses before another executor round.
+
+These numbers are only anchors. Main Codex may override them when the user's natural-language comments clearly indicate more or less remaining expert signal than the scores alone suggest. Prefer thoughtful judgment over arithmetic.
+
+Do not explicitly tell the user "you can no longer contribute" or similar. If the loop appears exhausted, phrase it naturally:
+
+```text
+This looks close enough that we can either finish the trace here, or you can give me one last concrete weakness if there is still something important to improve.
+```
+
+If the user provides too few actionable weaknesses for the current minimum, record the message first, then ask for more. Do not launch the next executor until the review gate is satisfied, unless the user clearly and strongly asks to continue anyway. If they force continuation, mark the review as forced and use only the actionable weaknesses actually provided.
+
+### Comments Template
+
+After every executor output, create and show a blank comments template. Prefer:
+
+```bash
+python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py review-template --run <task_package_dir> --round-under-review <latest_round_id> --deliverables-path <outputs_path> --min-strengths <min_strengths> --min-weaknesses <min_weaknesses> --rationale <brief_host_rationale>
+```
+
+Then show the user the important parts directly in chat:
+
+```text
+For this round, please give at least <min_weaknesses> concrete weaknesses. Strengths are optional/lightweight, but helpful for context. Please also fill in the two scores.
+
+Strengths:
+- <optional strength>
+
+Weaknesses:
+- <actionable weakness>
+
+Latest Deliverables Satisfaction:
+()/5
+
+Latest Deliverables Aligns User Scores:
+()/10
+
+Notes:
+```
+
+If the user's language is not English, translate the visible labels and explanations while preserving the two score names if that helps parsing. The stored comments can still use the English headings when practical.
 
 ## Storage
 
@@ -158,7 +225,7 @@ If the prompt is only in chat, create a temporary file containing the exact text
 python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py manifest --run <task_package_dir> --round v000_cold_start --stage cold_start
 ```
 
-10. Ask the user for strengths and weaknesses of the latest output.
+10. Use Review Governance to decide the current minimum weakness count, create/show the comments template, and ask the user for comments.
 
 ## Cold-Start Prompt
 
@@ -192,18 +259,21 @@ When the user provides strengths, weaknesses, scores, comments, or any review-li
 1. Before interpreting the message, save it verbatim:
 
 ```bash
-python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py record-review --run <task_package_dir> --round-under-review <latest_round_id> --raw-file <verbatim_review_file>
+python3 ~/.codex/skills/expert-boost-loop/scripts/boost_record.py record-review --run <task_package_dir> --round-under-review <latest_round_id> --raw-file <verbatim_review_file> --min-strengths <min_strengths> --min-weaknesses <min_weaknesses> --host-decision <request_more|continue|terminate>
 ```
 
-2. Parse strengths and weaknesses conservatively from the raw text.
-3. Update `review.json` with parsed `strengths`, `weaknesses`, `scores`, and `notes` while keeping `raw_text` unchanged.
-4. If weaknesses are ambiguous, preserve the raw review first, then ask a concise clarification.
+2. Parse strengths, weaknesses, scores, and notes conservatively from the raw text.
+3. If the user did not use the template headings, still save the raw text exactly, then pass host-parsed fields through `--strength`, `--weakness`, `--satisfaction`, `--aligns-user-score`, and `--notes` so `review.json` is structured without altering the raw text.
+4. Update `review.json` with parsed `strengths`, `weaknesses`, `scores`, `notes`, validation, and the host decision while keeping `raw_text` unchanged.
+5. If the review does not meet the current gate, preserve it first, then ask for the missing concrete weaknesses or scores. Do not launch the executor yet.
+6. If weaknesses are ambiguous, preserve the raw review first, then ask a concise clarification.
+7. If the user strongly insists on continuing despite an unmet gate, record with `--forced-by-user --host-decision continue`, then proceed using only actionable parsed weaknesses.
 
 Never summarize instead of saving the raw user review.
 
 ## Boosted Round
 
-If the review contains one or more weaknesses:
+If the accepted review contains one or more actionable weaknesses and Main Codex judges another round can still improve the deliverable:
 
 1. Create the next round id: `v001_boosted`, `v002_boosted`, and so on.
 2. Copy the previous round outputs into:
@@ -226,7 +296,9 @@ rounds/<new_round>/outputs/
 ```
 
 6. After the executor finishes, close it and verify that `outputs/` contains a complete replacement package.
-7. Write `final.md`, run `boost_record.py manifest`, update `task.json`, and ask for the next review.
+7. Write `final.md`, run `boost_record.py manifest`, update `task.json`, and use Review Governance to create/show the next comments template.
+
+If the accepted review has no actionable weaknesses, or Main Codex judges from the scores, language, task difficulty, and review content that another round is unlikely to add value, terminate instead of launching a boosted round.
 
 ## Boosted Prompt
 
@@ -263,7 +335,7 @@ Instructions:
 
 ## Termination
 
-If the user provides no weaknesses, says the output is acceptable, or asks to finish:
+If the user provides no weaknesses, says the output is acceptable, scores are high with no actionable weaknesses, review signal is exhausted, or the user asks to finish:
 
 1. Record the final review verbatim first.
 2. Set `task.json.status` to `terminated`.
@@ -274,8 +346,8 @@ If the user provides no weaknesses, says the output is acceptable, or asks to fi
 
 Keep replies compact:
 
-- After first output: report the task package path, output path, and ask for strengths and weaknesses.
-- After each review: say the review was recorded, then create the next complete package.
+- After each executor output: report the task package path and output path, then show the comments template with the current minimum weakness count and two scores.
+- After each review: say the review was recorded. If the gate is not met, ask for the missing weaknesses or scores. If accepted and continuing, create the next complete package.
 - After termination: report the task package path, final output path, and export summary path.
 
 Do not claim files were recorded unless they exist.
