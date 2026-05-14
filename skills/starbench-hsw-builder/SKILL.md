@@ -143,10 +143,10 @@ Always include a bold process-clarity note near the start:
 - English: "**Because skills and LLMs cannot guarantee that every instruction will feel perfectly clear, explicit, or natural, please pause the workflow and ask directly in the chat whenever something is unclear. This skill already understands the project process and can continue after your question.**"
 - Chinese: "**由于 skills 和 LLM 本身的特性，无法保证每条指令都完全清晰、明确、自然；但本 skill 已经充分理解本项目流程。如果哪里不懂，随时停下进度，直接在对话框里询问即可。**"
 
-Always include an italic session-boundary note near the start, immediately after the bold process-clarity note:
+Always include a blockquote session-boundary note near the start, immediately after the bold process-clarity note. Use Markdown `>` blockquote syntax, not italics:
 
-- English: "*For a cleaner build environment, we recommend using this chat only for this StarBench-HSW task and completing only one task here. Please start a new chat for a new task build. In this chat, we will also try to avoid unrelated skills from outside this pack; this does not affect what you can do in other chats.*"
-- Chinese: "*为保持构建环境尽量干净，建议这个 chat 窗口只进行本 StarBench-HSW 项目相关操作，并且只完成一个 task；如果要构造新的 task，请新建窗口。本窗口中我们也会尽量避免使用本 pack 以外的其他 skills；这不会影响你在其他窗口中的使用。*"
+- English: "> For a cleaner build environment, we recommend using this chat only for this StarBench-HSW task and completing only one task here. Please start a new chat for a new task build. In this chat, we will also try to avoid unrelated skills from outside this pack; this does not affect what you can do in other chats."
+- Chinese: "> 为保持构建环境尽量干净，建议这个 chat 窗口只进行本 StarBench-HSW 项目相关操作，并且只完成一个 task；如果要构造新的 task，请新建窗口。本窗口中我们也会尽量避免使用本 pack 以外的其他 skills；这不会影响你在其他窗口中的使用。"
 
 For Chinese users, the opening must include this exact preface:
 
@@ -155,7 +155,7 @@ For Chinese users, the opening must include this exact preface:
 
 **由于 skills 和 LLM 本身的特性，无法保证每条指令都完全清晰、明确、自然；但本 skill 已经充分理解本项目流程。如果哪里不懂，随时停下进度，直接在对话框里询问即可。**
 
-*为保持构建环境尽量干净，建议这个 chat 窗口只进行本 StarBench-HSW 项目相关操作，并且只完成一个 task；如果要构造新的 task，请新建窗口。本窗口中我们也会尽量避免使用本 pack 以外的其他 skills；这不会影响你在其他窗口中的使用。*
+> 为保持构建环境尽量干净，建议这个 chat 窗口只进行本 StarBench-HSW 项目相关操作，并且只完成一个 task；如果要构造新的 task，请新建窗口。本窗口中我们也会尽量避免使用本 pack 以外的其他 skills；这不会影响你在其他窗口中的使用。
 ```
 
 Suggested opening:
@@ -167,7 +167,7 @@ For high-quality task construction, please confirm you are using **GPT-5.5-High*
 
 **Because skills and LLMs cannot guarantee that every instruction will feel perfectly clear, explicit, or natural, please pause the workflow and ask directly in the chat whenever something is unclear. This skill already understands the project process and can continue after your question.**
 
-*For a cleaner build environment, we recommend using this chat only for this StarBench-HSW task and completing only one task here. Please start a new chat for a new task build. In this chat, we will also try to avoid unrelated skills from outside this pack; this does not affect what you can do in other chats.*
+> For a cleaner build environment, we recommend using this chat only for this StarBench-HSW task and completing only one task here. Please start a new chat for a new task build. In this chat, we will also try to avoid unrelated skills from outside this pack; this does not affect what you can do in other chats.
 
 We are looking for "Humans-Still-Win" moments: places where an AI agent may look fine at first glance, but a senior human would still notice the hidden trap, ask the sharper question, or make the better tradeoff.
 
@@ -189,7 +189,7 @@ If the user is communicating in Chinese, use this style:
 
 **由于 skills 和 LLM 本身的特性，无法保证每条指令都完全清晰、明确、自然；但本 skill 已经充分理解本项目流程。如果哪里不懂，随时停下进度，直接在对话框里询问即可。**
 
-*为保持构建环境尽量干净，建议这个 chat 窗口只进行本 StarBench-HSW 项目相关操作，并且只完成一个 task；如果要构造新的 task，请新建窗口。本窗口中我们也会尽量避免使用本 pack 以外的其他 skills；这不会影响你在其他窗口中的使用。*
+> 为保持构建环境尽量干净，建议这个 chat 窗口只进行本 StarBench-HSW 项目相关操作，并且只完成一个 task；如果要构造新的 task，请新建窗口。本窗口中我们也会尽量避免使用本 pack 以外的其他 skills；这不会影响你在其他窗口中的使用。
 
 我们要寻找的是那些 "Humans-Still-Win" 的时刻：AI Agent 表面上可能看起来还不错，但真正的资深专家仍然会发现隐藏的坑、问出更关键的问题，或者做出更成熟的取舍。
 
