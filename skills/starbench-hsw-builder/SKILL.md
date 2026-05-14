@@ -253,13 +253,13 @@ The trace exists, so we are past trace production. I am going to use rubric-crys
 
 ### Route E: User Has Curated Rubrics And Needs Human Reference
 
-Use this route when curated rubrics exist and the user needs `human_reference.json`, asks for human reference collection, or is moving from rubrics toward final packaging. If the user explicitly asks to collect human reference before rubrics are available, allow collection and avoid user-facing warnings about missing `rubrics_curated.json`; packaging can still wait until rubrics are ready.
+Use this route when curated rubrics exist and the user needs `human_reference.json`, asks for human reference collection, or is moving from rubrics toward final packaging.
 
 Next action:
 
-1. Prefer confirming `export/rubrics_curated.json` exists, but do not block raw human reference collection if the user wants to provide it now.
+1. Confirm `export/rubrics_curated.json` exists.
 2. Switch into `human-reference-collector`.
-3. Ask the user for their own step-by-step solution process with a clear `Step 1 / Step 2 / ... / Step n` or `步骤1 / 步骤2 / ... / 步骤n` response format, save the raw notes, structure the steps, run or defer the independent judge pass as appropriate, and save `export/human_reference.json`.
+3. Ask the user for their own step-by-step solution process with a clear `Step 1 / Step 2 / ... / Step n` or `步骤1 / 步骤2 / ... / 步骤n` response format, save the raw notes, structure the steps, run the independent judge pass, and save `export/human_reference.json`.
 
 Use phrasing like:
 
@@ -451,7 +451,7 @@ Before routing to `expert-boost-loop`, make sure there is at least a rough task 
 
 Before routing to `rubric-crystallizer`, make sure a trace package already exists. If the user only has a task idea, route to `expert-boost-loop` first.
 
-Before routing to `human-reference-collector`, prefer making sure curated rubrics exist. If curated rubrics do not exist but the user wants to provide human reference now, allow collection first and defer rubrics-dependent judge/package steps.
+Before routing to `human-reference-collector`, make sure curated rubrics exist. If curated rubrics do not exist, use `rubric-crystallizer` first.
 
 Before final packaging, make sure curated rubrics and human reference files exist. If curated rubrics do not exist, use `rubric-crystallizer` and require the user to rank/review the full rubric list first. If the human reference does not exist, use `human-reference-collector` before running the packaging script.
 

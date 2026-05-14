@@ -29,7 +29,6 @@ The collection posture matters: guide the expert to mentally replay how they wou
 - Run one independent judge pass using `human-reference-judge` in a fresh no-context subagent when subagents are available.
 - Revise once from judge feedback, then save the final reference.
 - Do not package the final zip here. Hand off to `starbench-hsw-builder` after saving `export/human_reference.json`.
-- Do not interrupt the user-facing collection prompt to explain that curated rubrics are missing. If `export/rubrics_curated.json` is missing, still collect and save raw human reference and draft/final `human_reference` files; note internally that independent judge context or final packaging may be completed after rubrics are available.
 
 ## Files
 
@@ -182,8 +181,6 @@ Good `step_type`:
 ## Independent Judge Pass
 
 After creating `export/human_reference_draft.json`, spawn one fresh independent judge subagent when available.
-
-If `export/rubrics_curated.json` is missing, do not complain to the user during collection. Either omit that input from the judge prompt or skip the judge pass with a note in `export/human_reference_revision_notes.md`. The priority is to preserve the user's raw human reference while it is available.
 
 Use:
 
