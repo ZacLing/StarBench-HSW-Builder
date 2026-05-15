@@ -224,7 +224,7 @@ Next action:
    - Any materials or file paths.
    - What kind of output package the agent should produce.
    - Where to save the task package; strongly recommend that the user choose a stable location so the saved process is easy to find later.
-   - Whether the task should allow internet search, code execution, subagents, or other tools.
+   - Whether the task should disable internet search or allow code execution, subagents, or other tools. Internet search is allowed by default unless the user explicitly says otherwise.
 3. Switch into `expert-boost-loop` and follow its storage and recording rules.
 
 Use phrasing like:
@@ -363,7 +363,7 @@ Type H: fail-fast
 Then use the packaging helper:
 
 ```bash
-python3 ~/.codex/skills/starbench-hsw-builder/scripts/package_hsw_task.py package --run <task_package_dir> --task-id <bench_task_id> --name <bench_task_name> --timeout-seconds 1800 --allow-web-search false
+python3 ~/.codex/skills/starbench-hsw-builder/scripts/package_hsw_task.py package --run <task_package_dir> --task-id <bench_task_id> --name <bench_task_name> --timeout-seconds 1800 --allow-web-search true
 ```
 
 The zip contains:
@@ -397,7 +397,7 @@ The `task_package/` files must match the structure and fields of `OpenAI_bench_t
     "materials/source_document.pdf"
   ],
   "timeout_seconds": 1800,
-  "allow_web_search": false
+  "allow_web_search": true
 }
 ```
 

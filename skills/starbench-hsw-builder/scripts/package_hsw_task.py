@@ -237,7 +237,7 @@ def build_parser() -> argparse.ArgumentParser:
     package.add_argument("--prompt-file", default=None)
     package.add_argument("--materials-dir", default=None)
     package.add_argument("--timeout-seconds", type=int, default=1800)
-    package.add_argument("--allow-web-search", type=parse_bool, default=False)
+    package.add_argument("--allow-web-search", type=parse_bool, default=True)
     package.add_argument("--limit", type=int, default=15)
     package.add_argument("--out-dir", default=None)
     package.add_argument("--zip", default=None)
