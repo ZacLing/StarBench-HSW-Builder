@@ -344,7 +344,7 @@ If curated rubrics are missing, use `rubric-crystallizer` after human reference 
 ```text
 我还不能直接打最终 zip。还差一步：请先对这些 rubrics 做排序和审阅。
 
-请按你认为最能挑出 agent 错误的顺序回复，格式如下：
+请按每条 rubric 对这个真实 task 本身的重要性排序：也就是哪些要求、判断、风险对这项具体任务最关键。不要按“哪条更容易考住 agent”来排。格式如下：
 
 C: <完整 rubric 文本>
 B: <完整 rubric 文本>

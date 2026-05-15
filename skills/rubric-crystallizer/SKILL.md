@@ -180,7 +180,7 @@ B: 交付物是否包含题目要求的唯一输出文件路径？ [fail-fast]
 C: 交付物是否明确指出了最高风险操作步骤的回滚或缓解方案？ [make-better]
 ```
 
-Then ask the user to reorder, edit, delete, or add rubrics. Make the expected reply format explicit. Tell the user to list rubrics in their preferred order, one per line, and to include any edits/deletions/additions/type changes in the same message. The user may reply like:
+Then ask the user to reorder, edit, delete, or add rubrics. Make the expected reply format explicit. Tell the user to rank rubrics by how important each rubric is to the real task itself: which requirements, judgments, and failure risks matter most for this concrete task. Do not frame ranking as "which rubric is more likely to catch or stump an agent." The user should list rubrics in their preferred importance order, one per line, and include any edits/deletions/additions/type changes in the same message. The user may reply like:
 
 ```text
 C: 交付物是否明确指出了最高风险操作步骤的回滚或缓解方案？
