@@ -111,9 +111,9 @@ def cmd_bench_rubrics(args: argparse.Namespace) -> None:
     src = Path(args.file).expanduser().resolve()
     out = Path(args.out).expanduser().resolve()
     data = read_json(src)
-    selected = active_rubrics(data)[: int(args.limit)]
-    if len(selected) < int(args.limit) and not args.allow_fewer:
-        raise SystemExit(f"need {args.limit} active rubrics for bench export, found {len(selected)}")
+    selected = active_rubrics(data)
+    if int(args.limit) > 0:
+        selected = selected[: int(args.limit)]
     errors: list[str] = []
     for index, item in enumerate(selected):
         errors.extend(validate_item(item, index))
@@ -142,7 +142,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate = sub.add_parser("validate")
     validate.add_argument("--file", required=True)
-    validate.add_argument("--min-active", type=int, default=15)
+    validate.add_argument("--min-active", type=int, default=0)
     validate.set_defaults(func=cmd_validate)
 
     markdown = sub.add_parser("markdown")
@@ -156,8 +156,7 @@ def build_parser() -> argparse.ArgumentParser:
     bench = sub.add_parser("bench-rubrics")
     bench.add_argument("--file", required=True)
     bench.add_argument("--out", required=True)
-    bench.add_argument("--limit", type=int, default=15)
-    bench.add_argument("--allow-fewer", action="store_true")
+    bench.add_argument("--limit", type=int, default=0, help="Optional maximum number of active rubrics to export; 0 exports all active rubrics.")
     bench.set_defaults(func=cmd_bench_rubrics)
 
     return parser

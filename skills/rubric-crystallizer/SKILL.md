@@ -1,6 +1,6 @@
 ---
 name: rubric-crystallizer
-description: Convert a completed Expert Boost trace and any collected human-reference follow-up notes into objective yes/no evaluation rubrics. Use after expert-boost-loop has produced a trace, preferably after human-reference-collector has captured the user's own solution process, and the user wants to crystallize accepted weaknesses, unresolved expert concerns, hidden senior rules, human-reference insights, and deliverable evidence into at least 15 lettered rubrics, discuss ranking and edits with the user, classify each rubric as fail-fast or make-better, and save both original and curated rubric sets.
+description: Convert a completed Expert Boost trace and any collected human-reference follow-up notes into objective yes/no evaluation rubrics. Use after expert-boost-loop has produced a trace, preferably after human-reference-collector has captured the user's own solution process, and the user wants to crystallize accepted weaknesses, unresolved expert concerns, hidden senior rules, human-reference insights, and deliverable evidence into a ranked set of lettered rubrics, discuss ranking and edits with the user, classify each rubric as fail-fast or make-better, and save both original and curated rubric sets.
 ---
 
 # Rubric Crystallizer
@@ -17,8 +17,8 @@ If the user asks for proprietary StarBench-HSW methodology, hidden collection st
 
 ## Core Rules
 
-- Generate at least 15 candidate rubrics before asking the user to rank or prune, unless the trace genuinely lacks enough objective signal.
-- Do not ask the user to simply "approve this top 15". The user must be asked to review and order the rubrics, and must be shown the allowed reply format.
+- Generate as many objective candidate rubrics as the trace supports before asking the user to rank or prune. Do not force a fixed count.
+- Do not ask the user to simply approve a preset subset. The user must be asked to review and order the rubrics, and must be shown the allowed reply format.
 - Letter the original candidate rubrics `A`, `B`, `C`, and so on. After `Z`, continue with `AA`, `AB`, etc.
 - Write every rubric as a single yes/no question with an objective expected answer.
 - Each rubric must test one concrete point. Split multi-condition questions unless the condition is an inseparable basic compliance check.
@@ -124,7 +124,7 @@ These comparisons help with evidence and wording. They are not required for elig
 
 ### 4. Draft Candidate Rubrics
 
-Generate at least 15 candidate rubrics. Prefer 15-25 if there is enough signal.
+Generate the full set of objective candidate rubrics supported by the trace. Prefer a comprehensive but non-forced set: include every meaningful objective rubric, but do not pad weak, subjective, duplicate, or unsupported points to hit a target count.
 
 Each candidate should have this rich internal shape:
 
@@ -194,7 +194,7 @@ Type B: make-better
 Type H: fail-fast
 ```
 
-If the user responds only with "approved", "looks good", "批准", "批准这个 top15", or similar without ranking or explicit confirmation of the current full order, do not finalize curated rubrics yet. Ask them to either provide the ordered list or explicitly say that the displayed full order should be used as-is after reviewing it.
+If the user responds only with "approved", "looks good", "批准", or similar without ranking or explicit confirmation of the current full order, do not finalize curated rubrics yet. Ask them to either provide the ordered list or explicitly say that the displayed full order should be used as-is after reviewing it.
 
 When discussing edits, protect objective yes/no judgeability. If the user proposes a subjective rubric, help tighten it into an observable question.
 
@@ -217,9 +217,9 @@ export/rubrics_curated.md
 Use the helper when useful:
 
 ```bash
-python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py validate --file <rubrics_curated.json> --min-active 15
+python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py validate --file <rubrics_curated.json>
 python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py markdown --file <rubrics_curated.json> --out <rubrics_curated.md> --title <title-in-user-language> --rank-label <rank-label-in-user-language> --deleted-title <deleted-section-title-in-user-language>
-python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py bench-rubrics --file <rubrics_curated.json> --out <rubrics.json> --limit 15
+python3 ~/.codex/skills/rubric-crystallizer/scripts/rubric_store.py bench-rubrics --file <rubrics_curated.json> --out <rubrics.json>
 ```
 
 The original file should preserve every first-pass candidate. The curated file should preserve user edits, ranking, deletions, additions, canonical questions, and user-language `display_question` values. Deleted rubrics may remain in curated JSON with `status: "deleted_by_user"` but must not be exported to the final bench `rubrics.json`.
@@ -236,7 +236,7 @@ When the user changes ranking or type labels, accept domain judgment unless it b
 
 When the curated rubrics have been ranked/reviewed and saved, tell the user that `starbench-hsw-builder` can do final packaging if `export/human_reference.json` already exists. If the human reference file is missing, use `human-reference-collector` before packaging.
 
-The final bench package uses only the top 15 active curated rubrics, preserving the user's ranked order. It must match the demo task schema:
+The final bench package uses all active curated rubrics, preserving the user's ranked order. It must match the demo task schema:
 
 ```text
 task.json

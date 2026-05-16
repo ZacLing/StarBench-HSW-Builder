@@ -59,7 +59,7 @@ def rank_key(item: dict[str, Any]) -> tuple[int, int, str]:
     return (1, 10**9, str(item.get("id") or ""))
 
 
-def active_curated_rubrics(path: Path, limit: int) -> list[dict[str, Any]]:
+def active_curated_rubrics(path: Path, limit: int = 0) -> list[dict[str, Any]]:
     data = read_json(path)
     rubrics = data.get("rubrics")
     if not isinstance(rubrics, list):
@@ -73,12 +73,12 @@ def active_curated_rubrics(path: Path, limit: int) -> list[dict[str, Any]]:
             continue
         active.append(item)
     active = sorted(active, key=rank_key)
-    if len(active) < limit:
-        raise SystemExit(f"need at least {limit} active curated rubrics, found {len(active)}")
-    return active[:limit]
+    if limit > 0:
+        return active[:limit]
+    return active
 
 
-def bench_rubrics(curated_path: Path, limit: int) -> dict[str, Any]:
+def bench_rubrics(curated_path: Path, limit: int = 0) -> dict[str, Any]:
     selected = active_curated_rubrics(curated_path, limit)
     rubrics = []
     for item in selected:
@@ -238,7 +238,7 @@ def build_parser() -> argparse.ArgumentParser:
     package.add_argument("--materials-dir", default=None)
     package.add_argument("--timeout-seconds", type=int, default=1800)
     package.add_argument("--allow-web-search", type=parse_bool, default=True)
-    package.add_argument("--limit", type=int, default=15)
+    package.add_argument("--limit", type=int, default=0, help="Optional maximum number of active rubrics to export; 0 exports all active rubrics.")
     package.add_argument("--out-dir", default=None)
     package.add_argument("--zip", default=None)
     package.set_defaults(func=cmd_package)

@@ -275,7 +275,7 @@ Next action:
 1. Confirm that the trace package exists and includes `task.json`, `original/`, `rounds/`, and `reviews/`.
 2. If `export/human_reference.json` is missing, switch into `human-reference-collector` first. Ask the user how they would solve the task themselves, save the raw explanation, structure it into `human_reference.json`, and collect any extra agent-failure notes they notice during that reflection.
 3. After human reference exists, switch into `rubric-crystallizer`.
-4. Have `rubric-crystallizer` produce at least 15 lettered rubrics from accepted weaknesses, hidden-rule rationales, deliverable evidence, and any extra human-reference notes that can be made objective. Classify each as fail-fast or make-better, save the original set, show all rubrics in full, require the user to rank/review them with the explicit format, discuss edits, and save the curated set.
+4. Have `rubric-crystallizer` produce as many objective lettered rubrics as the trace supports from accepted weaknesses, hidden-rule rationales, deliverable evidence, and any extra human-reference notes that can be made objective. Classify each as fail-fast or make-better, save the original set, show all rubrics in full, require the user to rank/review them with the explicit format, discuss edits, and save the curated set.
 
 Use phrasing like:
 
@@ -310,7 +310,7 @@ Next I am going to use human-reference-collector to capture how you would solve 
 
 Use this route when the user asks to package, export, zip, submit, finish, or create the benchmark task package.
 
-Only package after the reviewed rubrics exist and the user has ranked/reviewed them. Do not treat "approve this top 15" as enough by itself unless the user explicitly confirms that the displayed full order should be used as-is after reviewing it. The final zip is a builder responsibility, not an `expert-boost-loop` responsibility.
+Only package after the reviewed rubrics exist and the user has ranked/reviewed them. Do not treat a bare approval as enough by itself unless the user explicitly confirms that the displayed full order should be used as-is after reviewing it. The final zip is a builder responsibility, not an `expert-boost-loop` responsibility.
 
 Before packaging, ensure:
 
@@ -320,9 +320,9 @@ Before packaging, ensure:
 - Any removed intake scaffolding is saved under `audit/`, outside the benchmark `task_package/`.
 - `export/human_reference.json` exists and matches the bench schema.
 - `export/rubrics_original.json` exists.
-- `export/rubrics_curated.json` exists and has at least 15 active rubrics.
-- The top 15 active curated rubrics reflect the user's ordered review response, including any edits, deletions, additions, and fail-fast/make-better changes.
-- Each top rubric has `id`, `question`, `expected`, and `fail_fast`.
+- `export/rubrics_curated.json` exists and contains the user's curated rubric set. The active count may be any number.
+- The active curated rubrics reflect the user's ordered review response, including any edits, deletions, additions, and fail-fast/make-better changes.
+- Each active exported rubric has `id`, `question`, `expected`, and `fail_fast`.
 
 If `human_reference.json` is missing, switch into `human-reference-collector` before rubric crystallization or final packaging. Do not invent the human reference locally from final task understanding alone; it should be grounded in the user's own step-by-step solution process. The final file must use exactly:
 
