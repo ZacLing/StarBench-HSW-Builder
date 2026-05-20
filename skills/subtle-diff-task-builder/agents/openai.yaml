@@ -1,0 +1,7 @@
+interface:
+  display_name: "Subtle Diff Task Builder"
+  short_description: "Create path-changing task variants"
+  default_prompt: "Use $subtle-diff-task-builder to inspect an existing task and agent answer, interview me about hidden assumptions, and create a small-condition-change task variant where the expert path should change."
+
+policy:
+  allow_implicit_invocation: true
