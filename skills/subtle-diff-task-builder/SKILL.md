@@ -158,19 +158,17 @@ Avoid internal workflow language in expert-facing messages. Do not mention skill
 First expert message template:
 
 ```text
-我们先不设计新任务，也不写 rubric。
-
-请先打开并阅读下面这些原始内容，不要先看我的总结：
+请先阅读这个任务的原始内容：
 
 - 原始任务：<prompt path>
 - 输入材料：<human-readable materials path or "这个任务没有额外输入材料">
 - Agent 原始产出：<agent output path>
 
-读完后请只回答一个问题：
+读完后，请回答一个问题：
 
 如果这份 Agent 方案要成立，它背后默认了哪些条件？
 
-请列 3-8 条。可以写得很自然，不需要使用任何术语。
+请列 3-8 条，用你的日常工作语言写即可。
 ```
 
 ## Step 2: Assumption Interview
@@ -180,25 +178,21 @@ Ask the expert to identify assumptions behind the agent answer.
 Chinese prompt:
 
 ```text
-我们先不设计新任务，也不写 rubric。
-
-请先阅读 Agent 的原始产出，不要只看我的转述。读完后请回答：
+请先阅读这个任务的原始内容和 Agent 原始产出。读完后请回答：
 
 如果这套方案要成立，它背后默认了哪些条件？
 
-你可以直接列 3-8 条，例如：默认预算可以增加、默认客户愿意迁移、默认候选人相信公司未来、默认问题主要是渠道不足。
+请直接列 3-8 条，用你的日常工作语言写即可。
 ```
 
 English prompt:
 
 ```text
-Let's not design a new task or write rubrics yet.
-
-Please read the original agent output first, not only my description. After reading it, answer:
+Please read the original task materials and the original agent output. After reading them, answer:
 
 For this solution to work, what conditions does it silently assume are true?
 
-Please list 3-8 assumptions, such as budget can increase, customers are willing to migrate, candidates trust the company's future, or the problem is mainly a sourcing problem.
+Please list 3-8 assumptions in your normal working language.
 ```
 
 If the answer is thin, ask once for more specific assumptions:
