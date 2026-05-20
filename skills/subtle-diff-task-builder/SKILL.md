@@ -64,7 +64,8 @@ Follow the same interaction style as the rest of the HSW skill pack:
 - Do not tell the expert what not to read, what Codex has summarized, or what internal step is happening. Just point them to the original task, materials, and output.
 - Do not show JSON files as expert reading material. If JSON is needed to locate something, read it internally and surface only the human-readable source or the actual task input.
 - Do not show the expert a long checklist unless they ask. Convert gates into small natural questions.
-- If a path is long, show the shortest usable relative path and a plain label.
+- When showing local files in Codex, use Markdown links with absolute paths so the user can open them in the right-side preview, for example `[prompt.md](/absolute/path/to/prompt.md)`. If a path contains spaces, wrap the link target in angle brackets, for example `[prompt.md](</absolute/path with spaces/prompt.md>)`.
+- If the interaction is running in a plain terminal where clickable preview is unavailable, keep paths short and readable, with a plain label.
 
 Good first-step tone:
 
@@ -72,9 +73,9 @@ Good first-step tone:
 我已经找到这个任务的原始任务和 Agent 产出。
 
 请先阅读：
-- 原始任务：<prompt path>
-- 输入材料：<materials path or "这个任务没有额外输入材料">
-- Agent 原始产出：<output path>
+- 原始任务：<clickable prompt link>
+- 输入材料：<clickable materials link or "这个任务没有额外输入材料">
+- Agent 原始产出：<clickable output link>
 
 读完后，请告诉我：这份方案要成立，背后默认了哪些条件？
 
