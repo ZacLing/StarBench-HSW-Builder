@@ -85,7 +85,6 @@ When a working directory is available, save under:
 
 ```text
 export/subtle_diff/
-  intake_summary.md
   assumption_inventory_raw.md
   assumption_inventory.json
   candidate_variants.md
@@ -127,33 +126,45 @@ For a standard package variant, copy the source package and change only what is 
 
 Do not alter source materials unless the selected condition must be represented as a new material. If a new material is needed, make it explicit and document why the prompt alone is insufficient.
 
-## Step 1: Prepare The Expert Reading Brief
+## Step 1: Locate The Expert Reading Sources
 
-Read the task prompt, materials manifest if present, and one representative agent output.
+Read only enough project structure to locate the original task prompt, input materials, and one representative original task output.
 
 Do not summarize the agent answer as a substitute for expert reading. The expert must inspect the original output, because subtle-diff signal often lives in the answer's actual framing, omissions, emphasis, and path choice.
 
-Create a short reading brief that points the expert to the original files and tells them what to look for:
+Do not create a separate reading brief file. Do not ask the expert to read framework metadata or internal run files.
 
-- original task prompt path;
-- materials path or manifest path;
-- agent output path;
-- optional run/result path;
-- the exact question they should answer after reading.
+Expert-facing reading sources must be limited to:
+
+- the original task prompt, usually `prompt.md`;
+- the actual input materials used by the task;
+- the original agent output being inspected.
+
+Use internal JSON files only to locate the real materials or outputs. Do not show these files as expert reading targets:
+
+- `task.json`;
+- `rubrics.json`;
+- `human_reference.json`;
+- `materials_manifest.json`;
+- `result_summary.json`;
+- framework manifests, logs, traces, or score files.
+
+If the only available pointer to materials is a JSON manifest, read it yourself and point the expert to the underlying human-readable files or materials folder. If the actual task input itself is JSON and no human-readable material exists, say that the task input appears to be structured data and ask whether to convert or extract the relevant content for review. Do not simply tell the expert to read the JSON.
 
 Do not tell the expert what assumptions you think the output makes before they answer. If needed, mention only that they should look for hidden assumptions behind the agent's solution path.
+
+Avoid internal workflow language in expert-facing messages. Do not mention skill names, `trace`, `model_tests`, weak models, run IDs, manifests, framework paths, or "according to the skill". Keep the message as a normal working instruction.
 
 First expert message template:
 
 ```text
 我们先不设计新任务，也不写 rubric。
 
-请先打开并阅读下面这些原始材料，不要先看我的总结：
+请先打开并阅读下面这些原始内容，不要先看我的总结：
 
 - 原始任务：<prompt path>
-- 材料/manifest：<materials or manifest path>
+- 输入材料：<human-readable materials path or "这个任务没有额外输入材料">
 - Agent 原始产出：<agent output path>
-- 可选测试结果：<run/result path>
 
 读完后请只回答一个问题：
 
