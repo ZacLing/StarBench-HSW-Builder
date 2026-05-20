@@ -119,7 +119,14 @@ export/subtle_diff/
   candidate_variants.md
   selected_variant.md
   validation_checklist.md
-  task_package_<variant_id>/        optional, only when a standard package can be copied
+  candidates/
+    <variant_id>/
+      task_package/                 when a standard package can be copied
+      task_seed/                    fallback when no standard package exists
+      subtle_diff_notes.md
+  selected/
+    task_package/                   copied from the expert-confirmed candidate when ready
+    task_seed/                      fallback when the selected candidate is only a seed
 ```
 
 Use this minimal structure for `assumption_inventory.json`:
@@ -264,13 +271,42 @@ Strong answer:
 The task stops being a sourcing problem and becomes a candidate-risk-reversal problem, because higher pay is unavailable and candidates doubt the business direction.
 ```
 
-## Step 4: Generate Candidate Variants
+## Step 4: Generate Candidate Task Packages
 
-Generate 2-4 candidate variants from the selected assumption. Each candidate should include:
+Generate 2-4 candidate variants from the selected assumption and immediately materialize each one as a candidate task package when possible.
+
+Do not stop at describing candidate changes in chat. The useful artifact is a concrete package the expert and later tester can open, inspect, and run.
+
+For a standard source package, copy it to:
+
+```text
+export/subtle_diff/candidates/<variant_id>/task_package/
+```
+
+Then change only what is required:
+
+- `prompt.md`: add or minimally integrate the selected explicit condition change.
+- `task.json`: update task id/name only if needed for uniqueness.
+- `materials/`: copy unchanged unless the selected condition must be represented as a material.
+- `subtle_diff_notes.md`: write the assumption, small change, expected path change, and fairness risks.
+
+If the source is not a standard task package, create a task seed instead:
+
+```text
+export/subtle_diff/candidates/<variant_id>/task_seed/
+  prompt.md
+  materials_reference.md
+  expected_path_change.md
+```
+
+Also write a compact `candidate_variants.md` index that points to each generated package or seed using clickable local file links when available.
+
+Each candidate entry should include:
 
 ```text
 Variant ID:
 Small change:
+Candidate package:
 Revised task condition:
 Old template likely to fail:
 New expert path:
@@ -298,12 +334,12 @@ Bad change shapes:
 
 ## Step 5: Expert Confirmation
 
-Show the candidates and ask the expert to choose or revise in plain language.
+Show the generated candidate packages and ask the expert to choose or revise in plain language.
 
 Expert-facing prompt:
 
 ```text
-我整理了几个候选变化。请你只判断它们是否像真实工作，而不是帮我写完整任务。
+我已经生成了几个候选测试包。请你打开看一下，不需要帮我写完整任务，只判断它们是否像真实工作。
 
 请重点看四点：
 
@@ -313,7 +349,7 @@ Expert-facing prompt:
 4. 哪一句需要删掉或改写，才能避免误解？
 ```
 
-Do not proceed to package creation until the expert confirms one selected variant or asks to keep it as exploratory notes only.
+Do not treat any generated package as validated until the expert confirms one selected variant or asks to keep it as exploratory notes only.
 
 When saving `selected_variant.md`, use this structure:
 
@@ -324,6 +360,7 @@ When saving `selected_variant.md`, use this structure:
 - Source task:
 - Source materials:
 - Source agent output:
+- Candidate package:
 - Selected assumption:
 - Expert-confirmed old path:
 - Expert-confirmed new path:
@@ -383,30 +420,23 @@ Use the gates in order:
 
 If any gate fails, save notes but label the variant `exploratory_not_ready`. If a gate is uncertain, label it `needs_expert_review` and ask the expert the smallest clarifying question.
 
-## Step 7: Create A Variant Package Or Seed
+## Step 7: Finalize The Selected Candidate
 
-If the source is a standard task package, create a copied package under `export/subtle_diff/task_package_<variant_id>/`.
-
-Suggested prompt patch:
-
-```md
-Additional task condition for this variant:
-
-<selected explicit condition>
-```
-
-Use this only when it preserves the original task shape. If the condition naturally belongs in the original task body, rewrite the prompt minimally and document the exact change in `selected_variant.md`.
-
-If the source is an Expert Boost trace without a packaged benchmark task, create a task seed instead:
+After expert confirmation, copy the selected candidate into:
 
 ```text
-export/subtle_diff/task_seed_<variant_id>/
-  prompt.md
-  materials_reference.md
-  expected_path_change.md
+export/subtle_diff/selected/task_package/
 ```
 
-Then hand off to `expert-boost-loop` for a fresh run on that variant.
+If only a task seed exists, copy it into:
+
+```text
+export/subtle_diff/selected/task_seed/
+```
+
+Update `selected_variant.md` with the expert-confirmed old path, new path, gate results, remaining risks, and the selected package or seed path.
+
+Then hand off to `expert-boost-loop` for a fresh run on that selected variant.
 
 ## Step 8: Report What Was Learned
 
