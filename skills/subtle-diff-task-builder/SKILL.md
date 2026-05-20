@@ -53,6 +53,34 @@ Do not edit other skill files to register this handoff. Keep integration in this
 - Do not bypass `rubric-crystallizer` for final benchmark rubrics.
 - Keep expert interaction light: short summaries, one question at a time, and concrete choices.
 
+## Expert-Facing Voice
+
+Follow the same interaction style as the rest of the HSW skill pack:
+
+- Speak to the expert as a collaborator, not as a system explaining its own workflow.
+- Ask one practical question at a time.
+- Use plain working language. Avoid benchmark-construction terms unless the user already uses them.
+- Keep internal mechanics invisible. Do not mention skill names, manifests, traces, run IDs, model-test folders, score files, or framework structure in expert-facing messages.
+- Do not tell the expert what not to read, what Codex has summarized, or what internal step is happening. Just point them to the original task, materials, and output.
+- Do not show JSON files as expert reading material. If JSON is needed to locate something, read it internally and surface only the human-readable source or the actual task input.
+- Do not show the expert a long checklist unless they ask. Convert gates into small natural questions.
+- If a path is long, show the shortest usable relative path and a plain label.
+
+Good first-step tone:
+
+```text
+我已经找到这个任务的原始任务和 Agent 产出。
+
+请先阅读：
+- 原始任务：<prompt path>
+- 输入材料：<materials path or "这个任务没有额外输入材料">
+- Agent 原始产出：<output path>
+
+读完后，请告诉我：这份方案要成立，背后默认了哪些条件？
+
+列 3-8 条即可，用你的日常工作语言写。
+```
+
 ## Inputs
 
 Accept any of these:
@@ -158,13 +186,15 @@ Avoid internal workflow language in expert-facing messages. Do not mention skill
 First expert message template:
 
 ```text
-请先阅读这个任务的原始内容：
+我已经找到这个任务的原始任务和 Agent 产出。
+
+请先阅读：
 
 - 原始任务：<prompt path>
 - 输入材料：<human-readable materials path or "这个任务没有额外输入材料">
 - Agent 原始产出：<agent output path>
 
-读完后，请回答一个问题：
+读完后，请告诉我：
 
 如果这份 Agent 方案要成立，它背后默认了哪些条件？
 
@@ -178,7 +208,9 @@ Ask the expert to identify assumptions behind the agent answer.
 Chinese prompt:
 
 ```text
-请先阅读这个任务的原始内容和 Agent 原始产出。读完后请回答：
+请先阅读这个任务的原始内容和 Agent 原始产出。
+
+读完后，请告诉我：
 
 如果这套方案要成立，它背后默认了哪些条件？
 
@@ -207,12 +239,14 @@ Preserve the raw expert response in `assumption_inventory_raw.md`.
 
 Do not ask the expert to write the variant. Ask them to choose the assumption with the most leverage.
 
-Prompt:
+Expert-facing prompt:
 
 ```text
-如果只能打掉一个默认前提，哪个最能让这套常规方案失效？
+在你列出的这些默认条件里，哪一个最关键？
 
-更重要的是：这个前提不成立时，专业解法会换到哪条路？请用一两句话说明新路径，不需要写完整方案。
+也就是说：如果这个条件不成立，原方案会在哪些地方不适用？真正专业的处理会转向什么方向？
+
+请选 1 条，并用一两句话说明。不需要写完整方案。
 ```
 
 Accept only assumptions where the expert can explain the path change.
@@ -263,17 +297,19 @@ Bad change shapes:
 
 ## Step 5: Expert Confirmation
 
-Show the candidates and ask the expert to choose or revise.
+Show the candidates and ask the expert to choose or revise in plain language.
 
-Prompt:
+Expert-facing prompt:
 
 ```text
-请只判断这几个候选变体：
+我整理了几个候选变化。请你只判断它们是否像真实工作，而不是帮我写完整任务。
+
+请重点看四点：
 
 1. 哪个变化最小？
-2. 哪个最能让普通答案失效？
-3. 哪个最真实、最公平，不像陷阱题？
-4. 需要删掉或改写哪一句，才能避免歧义？
+2. 哪个最能让原来的方案不再适用？
+3. 哪个最像真实工作，不像故意刁难？
+4. 哪一句需要删掉或改写，才能避免误解？
 ```
 
 Do not proceed to package creation until the expert confirms one selected variant or asks to keep it as exploratory notes only.
