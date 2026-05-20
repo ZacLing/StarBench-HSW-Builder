@@ -127,6 +127,8 @@ export/subtle_diff/
   selected/
     task_package/                   copied from the expert-confirmed candidate when ready
     task_seed/                      fallback when the selected candidate is only a seed
+    subtle_diff_task_package.zip    final shareable zip when a task package exists
+    subtle_diff_task_seed.zip       final shareable zip when only a seed exists
 ```
 
 Use this minimal structure for `assumption_inventory.json`:
@@ -420,7 +422,7 @@ Use the gates in order:
 
 If any gate fails, save notes but label the variant `exploratory_not_ready`. If a gate is uncertain, label it `needs_expert_review` and ask the expert the smallest clarifying question.
 
-## Step 7: Finalize The Selected Candidate
+## Step 7: Finalize And Zip The Selected Candidate
 
 After expert confirmation, copy the selected candidate into:
 
@@ -436,17 +438,42 @@ export/subtle_diff/selected/task_seed/
 
 Update `selected_variant.md` with the expert-confirmed old path, new path, gate results, remaining risks, and the selected package or seed path.
 
-Then hand off to `expert-boost-loop` for a fresh run on that selected variant.
+Then create a shareable zip automatically:
+
+- If `export/subtle_diff/selected/task_package/` exists, zip that folder as `export/subtle_diff/selected/subtle_diff_task_package.zip`.
+- If only `export/subtle_diff/selected/task_seed/` exists, zip that folder as `export/subtle_diff/selected/subtle_diff_task_seed.zip`.
+- Include `selected_variant.md` and `validation_checklist.md` in the zip when they exist, so reviewers can see why this variant was selected.
+- Do not ask the expert to run zip commands or manually collect files.
+
+After zipping, show only the final zip link and the selected package link. Use clickable Markdown absolute-path links when the user is in Codex.
+
+Then hand off to `expert-boost-loop` for a fresh run on that selected variant if the user wants to continue testing.
 
 ## Step 8: Report What Was Learned
 
-End with a short status:
+End with a short closeout status:
 
 - selected assumption;
 - selected variant;
 - why old template fails;
 - what expert path should replace it;
+- final selected task package or seed path;
+- final shareable zip path;
 - whether it is ready for a new Expert Boost run, needs expert revision, or should be discarded.
+
+Expert-facing closeout template:
+
+```text
+这个 subtle diff 候选任务已经整理完成。
+
+- 选中的变化：<one-line selected variant>
+- 为什么原方案会失效：<one-line old path failure>
+- 新的专业处理方向：<one-line new path>
+- 可检查的任务包：<clickable selected package link>
+- 可直接发送的 zip：<clickable zip link>
+
+如果你确认这版可以，我们下一步可以用这个 zip 进入正式测试或新一轮 Expert Boost。
+```
 
 Use cautious language. Subtle-diff production is exploratory; a candidate is not a validated benchmark task until it has been run, reviewed, and crystallized.
 
