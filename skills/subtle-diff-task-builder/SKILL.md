@@ -471,8 +471,6 @@ Expert-facing closeout template:
 - 新的专业处理方向：<one-line new path>
 - 可检查的任务包：<clickable selected package link>
 - 可直接发送的 zip：<clickable zip link>
-
-如果你确认这版可以，我们下一步可以用这个 zip 进入正式测试或新一轮 Expert Boost。
 ```
 
 Use cautious language. Subtle-diff production is exploratory; a candidate is not a validated benchmark task until it has been run, reviewed, and crystallized.
